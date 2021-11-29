@@ -1,0 +1,82 @@
+﻿@page "/routing/{MachineID}"
+
+@using OLM.Blazor.WASM.Pages.Routing.Induvidual
+
+@inject IRoutingRepository RoutingRepo
+
+@if (_isLoading == false)
+{
+    @if (model != default)
+    {
+        <div class="machinerouting-container text-center">
+            <span class="machinerouting-title">@MachineID szabászsor routingja</span>
+
+            @if (LoadToRows == false)
+            {
+                var dailyHorCount = model.Daily.Data.Count();
+                var weeklyHorCount = model.Weekly.Data.Count();
+
+                <div class="mat-layout-grid">
+                    <div class="mat-layout-grid-inner">
+                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
+                            <DailyRouting MachineID="@MachineID" HorizontalCount="dailyHorCount" Height="Height" HeightDifference="titleHeightDiff" />
+                        </div>
+                        <div class="mat-layout-grid-cell mat-layout-grid-cell-span-6">
+                            <WeeklyRouting MachineID="@MachineID" HorizontalCount="weeklyHorCount" Height="Height" HeightDifference="titleHeightDiff" />
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                var horCount = (model.Daily.Data.Count() + model.Weekly.Data.Count());
+
+                <DailyRouting MachineID="@MachineID" HorizontalCount="horCount" Height="Height" HeightDifference="titleHeightDiff" />
+
+                <WeeklyRouting MachineID="@MachineID" HorizontalCount="horCount" Height="Height" HeightDifference="titleHeightDiff" />
+            }
+
+        </div>
+
+    }
+    else
+    {
+        <DataFetchError ErrorMSG="@errMSG" />
+    }
+
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+
+@code{
+
+    private const int titleHeightDiff = 180;
+
+    private bool _isLoading = true;
+    private AggregatedRoutingViewModel model;
+    private string errMSG;
+
+    [Parameter]
+    public string MachineID { get; set; }
+
+    [Parameter]
+    public bool LoadToRows { get; set; }
+
+    [Parameter]
+    public int? Height { get; set; } = 500;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var response = await RoutingRepo.Fetch(MachineID);
+
+        if (response.Success) model = response.Model;
+        else errMSG = response.Message;
+
+        _isLoading = false;
+    }
+}

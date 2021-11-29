@@ -1,0 +1,69 @@
+﻿@using OLM.Shared.Models.Routing.SharedAPIModels.Response
+
+@inject IJSRuntime JSRuntime
+
+@if (Data != default)
+{
+    var diff = Data.ActualRouting - Data.ExpectedRouting;
+
+    <div>
+        <div class="d-flex align-items-center justify-content-between mx-auto w-100">
+            <span style="white-space: nowrap;">@Data.Dimension</span><div id="@ChartID" class="w-100"></div>
+        </div>
+        <div class="chart-exp-container">
+            <span class="chart-exp-title">Elvárt:</span><span class="chart-exp-value">@Data.ExpectedRouting.RoundTo2DecimalDigits() M</span>
+        </div>
+        <div class="chart-act-container">
+            <span class="chart-act-title">Aktuális:</span><span class="chart-act-value">@Data.ActualRouting.RoundTo2DecimalDigits() M</span>
+        </div>
+        <div class="chart-dif-container">
+            <span class="chart-dif-title">Különbség:</span><span class="chart-dif-value" style="color:@(diff >= 0 ? "green" : "red")">@diff.RoundTo2DecimalDigits() M</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="routing-chart-error">
+        A megadott adat üres volt a diagram kirajzolásához
+    </div>
+}
+
+
+
+
+
+@code {
+    [Parameter]
+    public string ChartID { get; set; }
+
+    [Parameter]
+    public int HorizontalCount { get; set; }
+
+    [Parameter]
+    public int HeightDifference { get; set; }
+
+    [Parameter]
+    public int? FixHeight { get; set; } = null;
+
+    [Parameter]
+    public RoutingsDataResponseViewModel Data { get; set; }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        var multiplier = 1.25;
+
+        var max = Data.ActualRouting > Data.ExpectedRouting ? Data.ActualRouting * multiplier : Data.ExpectedRouting * multiplier;
+
+        await JSRuntime.InvokeVoidAsync("drawRoutingChart", new
+        {
+            DivID = ChartID,
+            Dimension = Data.Dimension,
+            Expected = Data.ExpectedRouting,
+            Actual = Data.ActualRouting,
+            Max = max,
+            HorizontalCount = HorizontalCount,
+            HeightDiff = HeightDifference,
+            Height = FixHeight
+        });
+    }
+}

@@ -1,0 +1,67 @@
+﻿@page "/routing/aggregated/daily/{machineID}"
+
+@using OLM.Shared.Models.Routing.SharedAPIModels.Response
+@using OLM.Blazor.WASM.Pages.Routing.Components
+
+@inject IRoutingRepository RoutingRepo
+
+@if (_isLoading == false)
+{
+    <div class="machinerouting-daily-container text-center">
+        <span class="machinerouting-daily-title">@MachineID szabászsor napi</span>
+        @if (model != default)
+        {
+            <div class="machinerouting-daily-data-container">
+
+                @{
+                    var daily = new RoutingsDataResponseViewModel { Dimension = "Összesített", ActualRouting = model.Data.Sum(m => m.ActualRouting), ExpectedRouting = model.Data.Sum(m => m.ExpectedRouting) };
+                }
+
+                <RoutingChart ChartID="@($"routing-aggregated-daily-{MachineID}-{daily.Dimension.Replace(" ","")}")" FixHeight="Height" Data="daily" />
+
+            </div>
+        }
+        else
+        {
+            <DataFetchError ErrorMSG="@errMSG" />
+        }
+    </div>
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+
+
+@code {
+
+
+    private bool _isLoading = true;
+    private RoutingResponseViewModel model;
+    private string errMSG;
+
+    [Parameter]
+    public string MachineID { get; set; }
+
+    [Parameter]
+    public int? HorizontalCount { get; set; } = null;
+
+    [Parameter]
+    public int? HeightDifference { get; set; }
+
+    [Parameter]
+    public int? Height { get; set; } = null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var response = await RoutingRepo.FetchForDay(MachineID);
+
+        if (response.Success) model = response.Model;
+        else errMSG = response.Message;
+
+        _isLoading = false;
+    }
+}

@@ -1,0 +1,123 @@
+﻿@page "/report/followup/yearly/weeks"
+@using OLM.Blazor.WASM.Store.DailyReport.Yearly.WeeksFollowUp
+@using OLM.Blazor.WASM.Store.DailyReport.Yearly.WeeksFollowUp.Actions
+
+@inherits FluxorComponent
+
+@inject IState<YearlyWeeksFollowUpPageState> State
+@inject IDispatcher Dispatcher
+@inject IJSRuntime JSRuntime
+@inject AppOptions AppOptions
+
+<div style="height:90vh;">
+    @if (State.Value.IsLoading == false)
+    {
+        if (State.Value.Data != default)
+        {
+            <div id="yearlyWeeksWasteFollowUp" style="height:100%;"></div>
+        }
+        else
+        {
+            if (State.Value.Errors != default && State.Value.Errors.Errors?.Any() == true)
+            {
+                <DataFetchError ErrorMSG="@State.Value.Errors.Errors.First().ErrorMSG" />
+            }
+            else
+            {
+                <span>Az éves heti összesítő follow up selejt report lekérdezés közben váratlan hiba lépett fel</span>
+            }
+        }
+    }
+    else
+    {
+        <AlwaysSpinner />
+    }
+</div>
+
+
+<div class="d-flex align-items-center justify-content-between w-100">
+
+    <div class="d-flex align-items-center justify-content-start w-100">
+        <div class="mr-3">
+            <MatDatePicker TValue="DateTime" EnableTime="false" EnableWeekNumbers="true" Maximum="EndDate" @bind-Value="StartDate" />
+        </div>
+        <div>
+            <MatDatePicker TValue="DateTime" EnableTime="false" EnableWeekNumbers="true" Minimum="StartDate" @bind-Value="EndDate" />
+        </div>
+    </div>
+    <div>
+        <a target="_blank" style="color: red;" href="@($"{AppOptions.APIurl}/api/dailyreports/files/weeks?Start={StartDate.ToString("s")}&End={EndDate.ToString("s")}")">
+            <MatButton Label="Letöltés excelbe" Outlined="true" Icon="@MatIconNames.Cloud_download" />
+        </a>
+    </div>
+</div>
+
+
+@code
+{
+    private DateTime _startDate;
+    private DateTime _endDate;
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set
+        {
+            var date = value.ToLocalTime();
+            _startDate = date;
+            FetchReportData();
+        }
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set
+        {
+            var date = value.ToLocalTime();
+            _endDate = date;
+            FetchReportData();
+        }
+    }
+
+    private bool _rendered = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (State.Value.Data != default)
+        {
+            if (_rendered == false)
+            {
+                var data = State.Value.Data;
+
+                await JSRuntime.InvokeVoidAsync("drawYearlyWeeksWasteFollowUp", new
+                {
+                    divID = "yearlyWeeksWasteFollowUp",
+                    xAxisData = data.Data.Select(m => $"{m.Year}-{m.WeekNumber.ToString("D2")}W"),
+                    targetYAxisData = data.Data.Select(m => m?.TotalTargetPercent),
+                    totalWasteYAxisData = data.Data.Select(m => m?.TotalWastePercent),
+                    sawYAxisData = data.Data.Select(m => m?.TotalSawPercent),
+                    fsYAxisData = data.Data.Select(m => m?.TotalFSPercent),
+                    tramYAxisData = data.Data.Select(m => m?.TotalTramPercent),
+                    lamYAxisData = data.Data.Select(m => m?.TotalLamellaPercent),
+                });
+
+                _rendered = true;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _startDate = new DateTime(DateTime.Now.Year, 1, 1);
+        _endDate = DateTime.Now.GetPreviousWorkDay();
+        FetchReportData();
+    }
+
+    private void FetchReportData()
+    {
+        Dispatcher.Dispatch(new StartFetchingYearlyWeeksFollowUpAction(StartDate, EndDate));
+        _rendered = false;
+    }
+}

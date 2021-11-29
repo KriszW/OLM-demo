@@ -1,0 +1,59 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "bundles.api": "StartDebugging",
+        "bundles.backgroundtasks.updater": "StartDebugging",
+        "bundles.prices.backgroundtasks.updater": "StartDebugging",
+        "bundles-prices.api": "StartDebugging",
+        "categorybulbs.api": "StartDebugging",
+        "categorybulbs.backgroundtasks.updater": "StartDebugging",
+        "dailyreport.api": "StartDebugging",
+        "dailyreport.backgroundtasks.updater": "StartDebugging",
+        "identity.api": "StartDebugging",
+        "moneyexchangerate.api": "StartDebugging",
+        "routing.api": "StartDebugging",
+        "routing-data.api": "StartDebugging",
+        "routingdata.backgroundtasks.updater": "StartDebugging",
+        "routing-time.api": "StartDebugging",
+        "routingtime.backgroundtasks.updater": "StartDebugging",
+        "target.api": "StartDebugging",
+        "tco.api": "StartDebugging",
+        "tco.backgroundtasks.updater": "StartDebugging",
+        "tram.api": "StartDebugging",
+        "web.gtw.spa": "StartDebugging"
+      }
+    },
+    "dev": {
+      "commandName": "DockerCompose",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "bundles-prices.api",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/swagger",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "bundles.api": "DoNotStart",
+        "bundles.backgroundtasks.updater": "DoNotStart",
+        "bundles.prices.backgroundtasks.updater": "DoNotStart",
+        "bundles-prices.api": "StartDebugging",
+        "categorybulbs.api": "DoNotStart",
+        "categorybulbs.backgroundtasks.updater": "DoNotStart",
+        "dailyreport.api": "DoNotStart",
+        "dailyreport.backgroundtasks.updater": "DoNotStart",
+        "identity.api": "DoNotStart",
+        "moneyexchangerate.api": "StartDebugging",
+        "routing.api": "DoNotStart",
+        "routing-data.api": "DoNotStart",
+        "routingdata.backgroundtasks.updater": "DoNotStart",
+        "routing-time.api": "DoNotStart",
+        "routingtime.backgroundtasks.updater": "DoNotStart",
+        "target.api": "DoNotStart",
+        "tco.api": "DoNotStart",
+        "tco.backgroundtasks.updater": "DoNotStart",
+        "tram.api": "DoNotStart",
+        "web.gtw.spa": "DoNotStart"
+      }
+    }
+  }
+}

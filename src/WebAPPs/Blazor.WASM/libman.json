@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "plotly.js@1.54.2",
+      "destination": "wwwroot/plotly.js/",
+      "files": [
+        "plotly-finance.min.js"
+      ]
+    }
+  ]
+}

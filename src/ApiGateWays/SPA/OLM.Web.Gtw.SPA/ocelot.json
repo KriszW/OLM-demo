@@ -1,0 +1,334 @@
+{
+  "ReRoutes": [
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "identity.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/i/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/bundle/prices/manager/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "bundles-prices.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/bp/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/moneyexchangerate/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "moneyexchangerate.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/mer/cur/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/exchangerate/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "moneyexchangerate.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/mer/er/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "bundles.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/b/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/tramdimension/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tram.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tram/td/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/tramdimension/all",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tram.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tram/dimension/all"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/tramdata/upload",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tram.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tram/data/upload/"
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/tramdata/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tram.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tram/d/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tram.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tram/td/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/wastetarget/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "target.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/target/wt/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "target.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/target/wt/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/routing/manager/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "routing.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/r/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "routing.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/r/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/productiontime/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "routing-time.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/rt/pt/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/pauses/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "routing-time.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/rt/p/m/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "routing-time.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/rt/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/tco/settings/value/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tco.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/t/s/v/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/bundle/price/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tco.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/t/b/p/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "tco.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/t/{everything}"
+    },
+
+
+
+    {
+      "DownstreamPathTemplate": "/api/category/itemnumber/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "categorybulbs.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/cb/c/i/{everything}",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Ocelot",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "categorybulbs.api",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/cb/{everything}"
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5000"
+  },
+  "ServiceDiscoveryProvider": {
+    "Type": "Eureka"
+  }
+}

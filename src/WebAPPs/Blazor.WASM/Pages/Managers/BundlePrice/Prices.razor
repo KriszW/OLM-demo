@@ -1,0 +1,375 @@
+﻿@page "/bundle/prices"
+
+@using OLM.Blazor.WASM.Store.Manager.BundlePrices
+@using OLM.Blazor.WASM.Store.Manager.BundlePrices.Actions
+@using OLM.Shared.Models.Bundle.Prices.APIResponses
+@using OLM.Blazor.WASM.Services.Repositories.Abstractions.BundlePrices
+
+@attribute [Authorize]
+@inherits FluxorComponent
+
+@inject IState<BundlePricesState> State
+@inject IDispatcher Dispatcher
+@inject IBundlePriceRepository TcoBundlePriceRepo
+@inject IMatToaster Toaster
+@inject AppOptions _appOptions
+
+@if (State.Value.UploadingFile == true)
+{
+    <span>Fájl feltöltése...</span>
+    <AlwaysSpinner />
+}
+else
+{
+    @if (State.Value.IsLoading == false)
+    {
+        if (State.Value.Errors == default)
+        {
+            if (State.Value.Data != default)
+            {
+                if (State.Value.Data.Data != default)
+                {
+                    <h1>Cikk árak módosítása</h1>
+                    <MatButton Raised="true" TrailingIcon="@MatIconNames.Add" OnClick="UploadNewPrice">Új ár feltöltése</MatButton>
+
+                    <MatTable Items="State.Value.Data.Data"
+          PageSize="State.Value.PageSize"
+          Striped="true"
+          AllowSelection="false"
+          ShowPaging="false"
+          Class="text-center">
+
+                        <MatTableHeader>
+                            <th>Cikkszám</th>
+                            <th>VendorID</th>
+                            <th>Ár</th>
+                            <th>Valuta</th>
+                            <th>Akciók</th>
+                        </MatTableHeader>
+                        <MatTableRow>
+                            <td>@context.RawMaterialItemNumber</td>
+                            <td>@context.VendorID</td>
+                            <td>@context.Price @context.Currency</td>
+                            <td>@context.Currency</td>
+                            <td class="text-left">
+                                <MatButton Raised="true" Label="" OnClick="@(() => EditPrice(context) )" Icon="@MatIconNames.Edit" />
+                                <MatButton Raised="true" Label="" OnClick="@(()=> DeletePrice(context))" Icon="@MatIconNames.Delete" />
+                            </td>
+                        </MatTableRow>
+                    </MatTable>
+                    <div>
+                        <MatPaginator Length="(int)State.Value.Data.TotalItemCount"
+                  PageSize="State.Value.PageSize"
+                  Page="PageChanged"
+                  Label=""
+                  PageLabel="" />
+                    </div>
+
+                }
+                else
+                {
+                    <DataFetchError ErrorMSG="Az adatbázisba nincs cikk ár feltöltve" />
+                }
+
+
+            }
+            else
+            {
+                <DataFetchError ErrorMSG="Nincsen feltöltve cikk ár az adatbázisba" />
+            }
+        }
+        else
+        {
+            <DataFetchError ErrorMSG="@State.Value.Errors.Errors.FirstOrDefault()?.ErrorMSG" />
+        }
+    }
+    else
+    {
+        <AlwaysSpinner />
+    }
+
+    <MatButton Label="Feltöltés" Raised="true" Icon="@MatIconNames.Cloud_upload" OnClick="() => OpenUploadDialog()" />
+
+    <a style="color: red;" href="@($"{_appOptions.APIurl}/api/bp/f/m/download")">
+        <MatButton Label="Letöltés excelbe" Raised="true" Icon="@MatIconNames.Cloud_download" />
+    </a>
+
+}
+
+
+@if (State.Value.SelectedModelForDelete != default)
+{
+    <MatDialog @bind-IsOpen="isDeleteDialogOpen">
+        <MatDialogTitle>
+            A @State.Value.SelectedModelForDelete.RawMaterialItemNumber cikk ár törlése
+        </MatDialogTitle>
+        <MatDialogContent>
+            A törlés végleges, már nem lesz lehetőséged visszavonni a 'Törlés' gomb megnyomása után
+        </MatDialogContent>
+        <MatDialogActions>
+            <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelDelete">Mégsem</MatButton>
+            <MatButton TrailingIcon="@MatIconNames.Delete" OnClick="SubmitDelete">Törlés</MatButton>
+        </MatDialogActions>
+    </MatDialog>
+}
+
+@if (State.Value.ModelForEdit != default)
+{
+    <MatDialog @bind-IsOpen="isModifyDialogOpen">
+        <MatDialogTitle>
+            @($"{(State.Value.ModelForEdit.ID == default ? "Új cikk ár hozzáadása" : $"{State.Value.ModelForEdit.RawMaterialItemNumber} cikk ár módosítása")}")
+        </MatDialogTitle>
+        <EditForm Model="State.Value.ModelForEdit" OnSubmit="() => Task.CompletedTask">
+            <ServerSideValidator @ref="_serverSideValidator" />
+            <MatDialogContent>
+                <MatTextField Label="Beérkező fa anyag cikkszáma" @bind-Value="@State.Value.ModelForEdit.RawMaterialItemNumber" TValue="string" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.RawMaterialItemNumber)" />
+                <MatTextField Label="Vendor ID" @bind-Value="@State.Value.ModelForEdit.VendorID" TValue="string" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.VendorID)" />
+                <MatTextField Label="Valuta" @bind-Value="@State.Value.ModelForEdit.Currency" TValue="string" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Currency)" />
+                <MatNumericUpDownField Label="@($"A fa ára {State.Value.ModelForEdit.Currency}-ban")" DecimalPlaces="2" Minimum="0" @bind-Value="@State.Value.ModelForEdit.Price" TValue="decimal" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Price)" />
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelModify">Mégsem</MatButton>
+                <MatButton TrailingIcon="@($"{(State.Value.ModelForEdit.ID == default ? MatIconNames.Add : MatIconNames.Edit )}")"
+                       OnClick="SubmitEdit">
+                    @($"{(State.Value.ModelForEdit.ID == default ? "Feltöltés" : "Módosítás")}")
+                </MatButton>
+            </MatDialogActions>
+        </EditForm>
+    </MatDialog>
+}
+
+@if (State.Value.Currencies != default)
+{
+    <MatDialog @bind-IsOpen="isUploadFileDialogOpen">
+        <MatDialogTitle>
+            A cikkek árának frissítése
+        </MatDialogTitle>
+
+        <EditForm Model="uploadFileModel" OnSubmit="() => Task.CompletedTask">
+            <ServerSideValidator @ref="_serverSideValidator" />
+
+            <MatDialogContent>
+                <span>Válaszd ki a fájlban található adatok valutáját</span>
+
+                <MatSelect Style="width:100%!important;" Label="Válaszd ki a valutát" @bind-Value="@uploadFileModel.SourceCurrency">
+                    <MatOptionString></MatOptionString>
+                    @foreach (var currency in State.Value.Currencies)
+                    {
+                    <MatOptionString Value="@currency">@currency</MatOptionString>
+                    }
+            </MatSelect>
+            <ValidationMessage For="@(()=> uploadFileModel.SourceCurrency)" />
+
+            <span>Válaszd ki azt a valutát amire szeretnéd átváltani a rakatok köbméter árát</span>
+
+            <MatSelect Style="width:100%!important;" Label="Válaszd ki a valutát" @bind-Value="@uploadFileModel.DestinationCurrency">
+                <MatOptionString></MatOptionString>
+                @foreach (var currency in State.Value.Currencies)
+                    {
+                    <MatOptionString Value="@currency">@currency</MatOptionString>
+                    }
+            </MatSelect>
+            <ValidationMessage For="@(()=> uploadFileModel.DestinationCurrency)" />
+
+            <MatFileUpload OnChange="@SetUploadFile"></MatFileUpload>
+            <ValidationMessage For="@(()=> uploadFileModel.File)" />
+
+            @if (uploadFileModel.File != default && string.IsNullOrEmpty(uploadFileModel.File.Name) == false)
+                {
+                    <span>@uploadFileModel.File.Name fájl kiválasztva</span>
+                }
+
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="() => isUploadFileDialogOpen = false">Mégsem</MatButton>
+                <MatButton TrailingIcon="@MatIconNames.Add" OnClick="() => { Dispatcher.Dispatch(uploadFileModel); isUploadFileDialogOpen = false; }">Feltöltés</MatButton>
+            </MatDialogActions>
+        </EditForm>
+    </MatDialog>
+}
+
+
+
+<MatDialog IsOpen="State.Value.UploadResponseMessage != default">
+    <MatDialogTitle>
+        A fájl feltöltése eredménye
+    </MatDialogTitle>
+    <MatDialogContent>
+        @State.Value.UploadResponseMessage
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Label="Ok" OnClick="() => FinishUpload()" />
+    </MatDialogActions>
+</MatDialog>
+
+@code {
+
+    private EditContext _editContext;
+    private ServerSideValidator _serverSideValidator;
+    private bool isDeleteDialogOpen = false;
+    private bool isModifyDialogOpen = false;
+    private bool isUploadFileDialogOpen = false;
+
+    private void CancelDelete() => isDeleteDialogOpen = false;
+    private void CancelModify()
+    {
+        isModifyDialogOpen = false;
+        UpdateItems();
+    }
+
+    private UploadPowerBiFileWithCurrenciesAction uploadFileModel;
+
+    private void FinishUpload()
+    {
+        Dispatcher.Dispatch(new UploadBundlePriceFileFinishedAction(default));
+        UpdateItems();
+    }
+
+    private void OpenUploadDialog()
+    {
+
+        isUploadFileDialogOpen = true;
+    }
+
+
+    private Task SetUploadFile(IMatFileUploadEntry[] files)
+    {
+        if (files.Length == 0)
+        {
+            _serverSideValidator.DisplayErrors(new OLM.Services.SharedBases.APIErrors.APIError("Nincs fájl kiválasztva", nameof(uploadFileModel.File)));
+            return Task.CompletedTask;
+        }
+
+        if (files.Any(m => m.Name.ToUpper().EndsWith(".CSV")) == false)
+        {
+            _serverSideValidator.DisplayErrors(new OLM.Services.SharedBases.APIErrors.APIError("Csak CSV fájl fogadható el", nameof(uploadFileModel.File)));
+            return Task.CompletedTask;
+        }
+
+        var csvFiles = files.Where(m => m.Name.ToUpper().EndsWith(".CSV")).ToList();
+
+        if (csvFiles.Count > 1)
+        {
+            _serverSideValidator.DisplayErrors(new OLM.Services.SharedBases.APIErrors.APIError("Csak egy CSV fájlt tölthetsz fel el", nameof(uploadFileModel.File)));
+        }
+        else if (csvFiles.Count == 0)
+        {
+            _serverSideValidator.DisplayErrors(new OLM.Services.SharedBases.APIErrors.APIError("Nincs CSV fájl feltöltve", nameof(uploadFileModel.File)));
+        }
+        else
+        {
+            uploadFileModel.File = csvFiles.FirstOrDefault();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void PageChanged(MatPaginatorPageEvent e)
+    {
+        Dispatcher.Dispatch(new PageIndexChangedAction(e.PageIndex));
+        Dispatcher.Dispatch(new PageSizeChangedAction(e.PageSize));
+
+        Dispatcher.Dispatch(new LoadBundlePricesAction(State.Value.PageIndex, State.Value.PageSize));
+    }
+
+    private void UploadNewPrice()
+    {
+        Dispatcher.Dispatch(new ChangePriceModelAction(new BundlePriceDTOViewModel()));
+
+        isModifyDialogOpen = true;
+    }
+
+    private void EditPrice(BundlePriceDTOViewModel model)
+    {
+        Dispatcher.Dispatch(new ChangePriceModelAction(model));
+
+        isModifyDialogOpen = true;
+    }
+
+    private async Task SubmitEdit()
+    {
+        var isAddNewModel = State.Value.ModelForEdit.ID == default;
+
+        if (isAddNewModel == true)
+        {
+            await UploadNewModel(State.Value.ModelForEdit);
+        }
+        else
+        {
+            await EditNewModel(State.Value.ModelForEdit);
+        }
+    }
+
+    private async Task UploadNewModel(BundlePriceDTOViewModel model)
+    {
+        var result = await TcoBundlePriceRepo.Upload(model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen feltöltötted a {model.RawMaterialItemNumber} cikk árat", MatToastType.Success, $"Sikeres feltöltés");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private async Task EditNewModel(BundlePriceDTOViewModel model)
+    {
+        var result = await TcoBundlePriceRepo.Modify(model.ID.GetValueOrDefault(), model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen módosítottad a {model.RawMaterialItemNumber} cikk árat", MatToastType.Success, $"Sikeres módosítás");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private void DeletePrice(BundlePriceDTOViewModel model)
+    {
+        isDeleteDialogOpen = true;
+        Dispatcher.Dispatch(new ModelForDeletingSetAction(model));
+    }
+
+    private async Task SubmitDelete()
+    {
+        var result = await TcoBundlePriceRepo.Delete(State.Value.SelectedModelForDelete.ID.GetValueOrDefault());
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen törölted a {State.Value.SelectedModelForDelete.RawMaterialItemNumber} cikk árat", MatToastType.Success, $"Sikeres törlés");
+        }
+        else
+        {
+            Toaster.Add($"A törlés nem sikerült, mert: {result.Message}", MatToastType.Danger, "Sikertelen törlés");
+        }
+
+        isDeleteDialogOpen = false;
+        UpdateItems();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Dispatcher.Dispatch(new LoadBundlePricesAction(State.Value.PageIndex, State.Value.PageSize));
+        uploadFileModel = new UploadPowerBiFileWithCurrenciesAction(default, default, default);
+
+        if (State.Value.Currencies == default || State.Value.Currencies.Any() == false)
+        {
+            Dispatcher.Dispatch(new LoadCurrenciesAction());
+        }
+    }
+
+    private void UpdateItems() => Dispatcher.Dispatch(new LoadBundlePricesAction(State.Value.PageIndex, State.Value.PageSize));
+}

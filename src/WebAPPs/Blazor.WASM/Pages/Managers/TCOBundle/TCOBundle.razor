@@ -1,0 +1,143 @@
+﻿@page "/tcobundle"
+
+@using OLM.Blazor.WASM.Store.Manager.TCOBundle
+@using OLM.Blazor.WASM.Store.Manager.TCOBundle.Actions
+
+@inherits FluxorComponent
+
+@inject IState<TCOBundleState> State
+@inject IDispatcher Dispatcher
+@inject IJSRuntime JSRuntime
+@inject AppOptions AppOptions
+
+<div>
+    @if (State.Value.IsLoading == false)
+    {
+        if (State.Value.Data != default)
+        {
+            <MatTable Items="State.Value.Data.Data"
+                      PageSize="State.Value.PageSize"
+                      Striped="true"
+                      AllowSelection="false"
+                      ShowPaging="false"
+                      Class="text-center">
+
+                <MatTableHeader>
+                    <th>BundleID</th>
+                    <th>Beszállító</th>
+                    <th>Fűrészüzem</th>
+                    <th>Minőség</th>
+                    <th>Összes</th>
+                    <th>Jó</th>
+                    <th>Hossztoldó</th>
+                    <th>Jó Arány</th>
+                    <th>Standaard TCO</th>
+                    <th>Aktuális TCO</th>
+                    <th>Bejezés ideje</th>
+                    <th>Dimenzió</th>
+                    <th>Cikkszám</th>
+                </MatTableHeader>
+                <MatTableRow>
+                    <td>@context.BundleID</td>
+                    <td>@context.Vendor</td>
+                    <td>@context.Sawmill</td>
+                    <td>@context.Quality</td>
+                    <td>@context.Input</td>
+                    <td>@context.Good</td>
+                    <td>@context.FS</td>
+                    <td>@context.GoodRate</td>
+                    <td>@context.StandardTCO</td>
+                    <td>@context.ActualTCO</td>
+                    <td>@context.FinishedDate</td>
+                    <td>@context.Dimension</td>
+                    <td>@context.MaterialNumber</td>
+                </MatTableRow>
+            </MatTable>
+            <div>
+                <MatPaginator Length="(int)State.Value.Data.TotalItemCount"
+                              PageSize="State.Value.PageSize"
+                              Page="PageChanged"
+                              Label=""
+                              PageLabel="" />
+            </div>
+        }
+        else
+        {
+            if (State.Value.Errors != default && State.Value.Errors.Errors?.Any() == true)
+            {
+                <DataFetchError ErrorMSG="@State.Value.Errors.Errors.First().ErrorMSG" />
+            }
+        }
+    }
+    else
+    {
+        <AlwaysSpinner />
+    }
+</div>
+
+
+<div class="d-flex align-items-center justify-content-between w-100">
+
+    <div class="d-flex align-items-center justify-content-start w-100">
+        <div class="mr-3">
+            <MatDatePicker TValue="DateTime" EnableTime="false" EnableWeekNumbers="true" Maximum="EndDate" @bind-Value="StartDate" />
+        </div>
+        <div>
+            <MatDatePicker TValue="DateTime" EnableTime="false" EnableWeekNumbers="true" Minimum="StartDate" @bind-Value="EndDate" />
+        </div>
+    </div>
+    <div>
+        <a target="_blank" style="color: red;" href="@($"{AppOptions.APIurl}/api/b/bundle/tco/download?From={StartDate.ToString("s")}&To={EndDate.ToString("s")}")">
+            <MatButton Label="Letöltés excelbe" Raised="true" Icon="@MatIconNames.Cloud_download" />
+        </a>
+    </div>
+</div>
+
+@code{
+
+    private DateTime _startDate;
+    private DateTime _endDate;
+
+    public DateTime StartDate
+    {
+        get => _startDate;
+        set
+        {
+            var date = value.ToLocalTime();
+            _startDate = date;
+            Dispatcher.Dispatch(new FromChangedAction(date));
+            UpdateItems();
+        }
+    }
+
+    public DateTime EndDate
+    {
+        get => _endDate;
+        set
+        {
+            var date = value.ToLocalTime();
+            _endDate = date;
+            Dispatcher.Dispatch(new ToChangedAction(date));
+            UpdateItems();
+        }
+    }
+
+    private void PageChanged(MatPaginatorPageEvent e)
+    {
+        Dispatcher.Dispatch(new PageIndexChangedAction(e.PageIndex));
+        Dispatcher.Dispatch(new PageSizeChangedAction(e.PageSize));
+
+        UpdateItems();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _startDate = State.Value.From;
+        _endDate = State.Value.To;
+
+        UpdateItems();
+    }
+
+    private void UpdateItems() => Dispatcher.Dispatch(new LoadTCOBundleAction(State.Value.From, State.Value.To, State.Value.PageIndex, State.Value.PageSize));
+}

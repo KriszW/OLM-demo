@@ -1,0 +1,53 @@
+﻿@inherits FluxorComponent
+
+@using OLM.Blazor.WASM.Store.Shared.ToggleableSideBar
+@using OLM.Blazor.WASM.Store.Machines.Machine.Actions
+s
+@inject IState<ToggleableSideBarState> _state
+@inject IDispatcher _dispatcher
+@inject IStorageRepository StorageRepository
+
+<div class="@_showMenuClass">
+    <MediaQuery Media="@Breakpoints.MediumDown">
+        <Matched>
+            <div class="sidebar">
+                <NavMenu />
+            </div>
+        </Matched>
+        <Unmatched>
+            <div class="toggle-sidebar-container">
+                <MatButton Class="sidebar-toggle" Style="width:100%;border-radius:0;" OnClick="ToggleSideBar">
+                    <MatIcon Icon="@_showSideBarIconName" Style="font-size:35px;color:white;" />
+                </MatButton>
+                @if (_showFullSidebar == true)
+                {
+                    <div class="sidebar">
+                        <NavMenu />
+                    </div>
+                }
+            </div>
+        </Unmatched>
+    </MediaQuery>
+</div>
+
+
+
+
+@code {
+    private string nameOfShowFullSideBarItemName = "HasToShowFullSideBar";
+    private bool _showFullSidebar = false;
+    private string _showSideBarIconName => _showFullSidebar ? MatIconNames.Arrow_left : MatIconNames.Arrow_right;
+    private string _showMenuClass => _state.Value.Hidden ? "d-none" : "d-block";
+
+    private async Task ToggleSideBar()
+    {
+        _showFullSidebar = !_showFullSidebar;
+
+        await StorageRepository.SaveToken(nameOfShowFullSideBarItemName, _showFullSidebar);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _showFullSidebar = await StorageRepository.ReadToken<bool>(nameOfShowFullSideBarItemName);
+    }
+}

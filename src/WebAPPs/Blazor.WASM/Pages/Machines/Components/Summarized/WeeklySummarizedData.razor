@@ -1,0 +1,62 @@
+﻿<div class="bundle-data machines-weekly">
+    <div class="bundle-data-container-title">
+        <div class="data-col-title">Heti teljesítmény adatai<span style="display: inline-block">(Hétfő 06:00-tól)</span></div>
+    </div>
+    <MediaQuery Media="@Breakpoints.LargeUp">
+        <Matched>
+            <div class="bundle-data-container">
+                <div class="data-col">
+                    <div class="row d-block">
+                        <div class="bundle-data-container">
+                            <div class="data-col">Bemenő méter</div>
+                            <div class="data-col">@Bundle.AllInput.RoundTo0DecimalDigits() M</div>
+                        </div>
+                    </div>
+                    <div class="row d-block">
+                        <div class="bundle-data-container">
+                            <div class="data-col">Legyártott jó méter</div>
+                            <div class="data-col">@Bundle.AllGoodProduced.RoundTo0DecimalDigits() M</div>
+                        </div>
+                    </div>
+                    <div class="row d-block">
+                        <div class="bundle-data-container">
+                            <div class="data-col">Legyártott hossztoldó méter</div>
+                            <div class="data-col">@Bundle.AllFS.RoundTo0DecimalDigits() M</div>
+                        </div>
+                    </div>
+                    <div class="row d-block">
+                        <div class="bundle-data-container">
+                            <div class="data-col">Selejt%</div>
+                            <div class="data-col">@((Bundle.WastePercentage * 100).RoundTo2DecimalDigits()) %</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-col"><TCOGauge Height="370" GaugeID="machines-weekly" TCO="Bundle.TCO" /></div>
+            </div>
+        </Matched>
+        <Unmatched>
+            <div class="bundle-data-container">
+                <div class="data-col">Bemenő méter</div>
+                <div class="data-col">@Bundle.AllInput.RoundTo0DecimalDigits() M</div>
+            </div>
+            <div class="bundle-data-container">
+                <div class="data-col">Legyártott jó méter</div>
+                <div class="data-col">@Bundle.AllGoodProduced.RoundTo0DecimalDigits() M</div>
+            </div>
+            <div class="bundle-data-container">
+                <div class="data-col">Legyártott hossztoldó méter</div>
+                <div class="data-col">@Bundle.AllFS.RoundTo0DecimalDigits() M</div>
+            </div>
+            <div class="bundle-data-container">
+                <div class="data-col">Selejt%</div>
+                <div class="data-col">@((Bundle.WastePercentage * 100).RoundTo2DecimalDigits()) %</div>
+            </div>
+            <div class="data-col" style="height:500px;"><TCOGauge GaugeID="machines-weekly" TCO="Bundle.TCO" /></div>
+        </Unmatched>
+    </MediaQuery>
+</div>
+
+@code {
+    [Parameter]
+    public WeeklySummarizedViewModel Bundle { get; set; }
+}

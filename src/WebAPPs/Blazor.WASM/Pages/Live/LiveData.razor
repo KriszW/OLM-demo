@@ -1,0 +1,52 @@
+﻿@page "/live"
+
+@inject ILivePagesService _livePagesService
+
+@*@switch (state)
+{
+    case 0:
+        <MachinesSummarized />
+        break;
+    case 1:
+    case 2:
+    case 3:
+        <Machine MachineID="@state.ToString()" />
+        break;
+    default:
+        <MachinesSummarized />
+        break;
+}*@
+
+@code {        
+
+    //Timer _updateTimer;
+    //const int waitBetweeninMS = 60000;
+    //const int maxNumber = 3;
+    //private int state = -1;
+
+    //public void Dispose()
+    //{
+    //    _updateTimer.Dispose();
+    //}
+
+    //protected override void OnInitialized()
+    //{
+    //    _updateTimer = new Timer(state => { InvokeAsync(UpdateCounter); }, null, 0, _options.LiveWaitingTimeBetweenPages * 1000);
+    //}
+
+    //async Task UpdateCounter()
+    //{
+    //    state++;
+
+    //    if (state > maxNumber) state = 0;
+
+    //    StateHasChanged();
+
+    //    await Task.CompletedTask;
+    //}
+
+    protected override void OnInitialized()
+    {
+        Task.Run(_livePagesService.Start);
+    }
+}

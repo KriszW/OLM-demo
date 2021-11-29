@@ -1,0 +1,242 @@
+﻿@page "/target/manager"
+
+@using OLM.Blazor.WASM.Store.Manager.Target.WasteTarget
+@using OLM.Blazor.WASM.Store.Manager.Target.WasteTarget.Actions
+@using OLM.Shared.Models.Target.SharedAPIModels
+@using OLM.Blazor.WASM.Services.Repositories.Abstractions.Target
+
+@attribute [Authorize]
+@inherits FluxorComponent
+
+@inject IState<WasteTargetManagerState> State
+@inject IDispatcher Dispatcher
+@inject IWasteTargetManagerRepository WasteTargetManagerRepository
+@inject IMatToaster Toaster
+
+@if (State.Value.IsLoading == false)
+{
+    if (State.Value.Errors == default)
+    {
+        if (State.Value.Data != default)
+        {
+            if (State.Value.Data.Data != default)
+            {
+                <h1>Targetek módosítása</h1>
+                <MatButton Raised="true" TrailingIcon="@MatIconNames.Add" OnClick="UploadNewPrice">Új target feltöltése</MatButton>
+
+                <MatTable Items="State.Value.Data.Data"
+                          PageSize="State.Value.PageSize"
+                          Striped="true"
+                          AllowSelection="false"
+                          ShowPaging="false"
+                          Class="text-center">
+
+                    <MatTableHeader>
+                        <th>Dimenzió</th>
+                        <th>Target</th>
+                        <th>Keresztmetszet</th>
+                        <th>Akciók</th>
+                    </MatTableHeader>
+                    <MatTableRow>
+                        <td>@context.Dimension</td>
+                        <td>@string.Format("{0:P2}", context.Target)</td>
+                        <td>@context.Intersection</td>
+                        <td class="text-left">
+                            <MatButton Raised="true" Label="" OnClick="@(() => EditPrice(context) )" Icon="@MatIconNames.Edit" />
+                            <MatButton Raised="true" Label="" OnClick="@(()=> DeletePrice(context))" Icon="@MatIconNames.Delete" />
+                        </td>
+                    </MatTableRow>
+                </MatTable>
+
+                <MatPaginator Length="(int)State.Value.Data.TotalItemCount"
+                              PageSize="State.Value.PageSize"
+                              Page="PageChanged"
+                              Label=""
+                              PageLabel="" />
+            }
+            else
+            {
+                <DataFetchError ErrorMSG="Az adatbázisba nincs target adatok feltöltve" />
+            }
+
+
+        }
+        else
+        {
+            <DataFetchError ErrorMSG="Nincsen feltöltve target adatok az adatbázisba" />
+        }
+    }
+    else
+    {
+        <DataFetchError ErrorMSG="@State.Value.Errors.Errors.FirstOrDefault()?.ErrorMSG" />
+    }
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+@if (State.Value.SelectedModelForDelete != default)
+{
+    <MatDialog @bind-IsOpen="isDeleteDialogOpen">
+        <MatDialogTitle>
+            A '@State.Value.SelectedModelForDelete.Dimension' target törlése
+        </MatDialogTitle>
+        <MatDialogContent>
+            A törlés végleges, már nem lesz lehetőséged visszavonni a 'Törlés' gomb megnyomása után
+        </MatDialogContent>
+        <MatDialogActions>
+            <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelDelete">Mégsem</MatButton>
+            <MatButton TrailingIcon="@MatIconNames.Delete" OnClick="SubmitDelete">Törlés</MatButton>
+        </MatDialogActions>
+    </MatDialog>
+}
+
+@if (State.Value.ModelForEdit != default)
+{
+    <MatDialog @bind-IsOpen="isModifyDialogOpen">
+        <MatDialogTitle>
+            @($"{(State.Value.ModelForEdit.ID == default ? "Új target hozzáadása" : $"'{State.Value.ModelForEdit.Dimension}' target módosítása")}")
+        </MatDialogTitle>
+        <EditForm Model="State.Value.ModelForEdit" OnSubmit="() => Task.CompletedTask">
+            <ServerSideValidator @ref="_serverSideValidator" />
+            <MatDialogContent>
+                <MatTextField Label="Dimenzió" @bind-Value="@State.Value.ModelForEdit.Dimension" TValue="string" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Dimension)" />
+
+                <MatNumericUpDownField Label="Target érték" 
+                                       @bind-Value="@State.Value.ModelForEdit.Target" 
+                                       DecimalPlaces="2" 
+                                       FieldType="MatNumericUpDownFieldType.Percent" 
+                                       TValue="double" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Target)" />
+
+                <MatNumericUpDownField Label="Keresztmetszet" 
+                                       @bind-Value="@State.Value.ModelForEdit.Intersection" 
+                                       TValue="double" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Intersection)" />
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelModify">Mégsem</MatButton>
+                <MatButton TrailingIcon="@($"{(State.Value.ModelForEdit.ID == default ? MatIconNames.Add : MatIconNames.Edit )}")"
+                           OnClick="SubmitEdit">
+                    @($"{(State.Value.ModelForEdit.ID == default ? "Feltöltés" : "Módosítás")}")
+                </MatButton>
+            </MatDialogActions>
+        </EditForm>
+    </MatDialog>
+}
+
+@code{
+
+    private EditContext _editContext;
+    private ServerSideValidator _serverSideValidator;
+    private bool isDeleteDialogOpen = false;
+    private bool isModifyDialogOpen = false;
+
+    private void CancelDelete() => isDeleteDialogOpen = false;
+    private void CancelModify()
+    {
+        isModifyDialogOpen = false;
+        UpdateItems();
+    }
+
+    private void PageChanged(MatPaginatorPageEvent e)
+    {
+        Dispatcher.Dispatch(new WasteTargetPageIndexChangedAction(e.PageIndex));
+        Dispatcher.Dispatch(new WasteTargetPageSizeChangedAction(e.PageSize));
+
+        Dispatcher.Dispatch(new LoadWasteTargetsAction(State.Value.PageIndex, State.Value.PageSize));
+    }
+
+    private void UploadNewPrice()
+    {
+        Dispatcher.Dispatch(new ChangeWasteTargetModelAction(new WasteTargetViewModel()));
+
+        isModifyDialogOpen = true;
+    }
+
+    private void EditPrice(WasteTargetViewModel model)
+    {
+        Dispatcher.Dispatch(new ChangeWasteTargetModelAction(model));
+
+        isModifyDialogOpen = true;
+    }
+
+    private async Task SubmitEdit()
+    {
+        var isAddNewModel = State.Value.ModelForEdit.ID == default;
+
+        if (isAddNewModel == true)
+        {
+            await UploadNewModel(State.Value.ModelForEdit);
+        }
+        else
+        {
+            await EditNewModel(State.Value.ModelForEdit);
+        }
+    }
+
+    private async Task UploadNewModel(WasteTargetViewModel model)
+    {
+        var result = await WasteTargetManagerRepository.Upload(model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen feltöltötted a '{model.Dimension}' targetot", MatToastType.Success, $"Sikeres feltöltés");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private async Task EditNewModel(WasteTargetViewModel model)
+    {
+        var result = await WasteTargetManagerRepository.Modify(model.ID.GetValueOrDefault(), model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen módosítottad a '{model.Dimension}' targetot", MatToastType.Success, $"Sikeres módosítás");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private void DeletePrice(WasteTargetViewModel model)
+    {
+        isDeleteDialogOpen = true;
+        Dispatcher.Dispatch(new WasteTargetModelForDeletingSetAction(model));
+    }
+
+    private async Task SubmitDelete()
+    {
+        var result = await WasteTargetManagerRepository.Delete(State.Value.SelectedModelForDelete.ID.GetValueOrDefault());
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen törölted a '{State.Value.SelectedModelForDelete.Dimension}' targetet", MatToastType.Success, $"Sikeres törlés");
+        }
+        else
+        {
+            Toaster.Add($"A törlés nem sikerült, mert: {result.Message}", MatToastType.Danger, "Sikertelen törlés");
+        }
+
+        isDeleteDialogOpen = false;
+        UpdateItems();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Dispatcher.Dispatch(new LoadWasteTargetsAction(State.Value.PageIndex, State.Value.PageSize));
+    }
+
+    private void UpdateItems() => Dispatcher.Dispatch(new LoadWasteTargetsAction(State.Value.PageIndex, State.Value.PageSize));
+}

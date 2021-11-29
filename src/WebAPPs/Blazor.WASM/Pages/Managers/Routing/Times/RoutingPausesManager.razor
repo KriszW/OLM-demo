@@ -1,0 +1,87 @@
+﻿@page "/routing/times/pauses"
+
+@using OLM.Blazor.WASM.Store.Manager.Routing.Times.RoutingPauses
+@using OLM.Blazor.WASM.Store.Manager.Routing.Times.RoutingPauses.Actions
+
+@attribute [Authorize]
+@inherits FluxorComponent
+
+@inject IState<RoutingPausesPageState> State
+@inject IDispatcher Dispatcher
+@inject IMatToaster Toaster
+@inject NavigationManager NavManager
+
+
+
+@if (State.Value.IsLoading == false)
+{
+    if (State.Value.Errors == default)
+    {
+        if (State.Value.Data != default)
+        {
+            if (State.Value.Data.Data != default)
+            {
+                <h1>Routing szünetek módosítása</h1>
+
+                <MatTable Items="State.Value.Data.Data"
+                          PageSize="State.Value.PageSize"
+                          Striped="true"
+                          AllowSelection="false"
+                          ShowPaging="false"
+                          Class="text-center">
+
+                    <MatTableHeader>
+                        <th>Év</th>
+                        <th>Hétszám</th>
+                        <th class="text-center">Időtartam</th>
+                        <th>Akciók</th>
+                    </MatTableHeader>
+                    <MatTableRow>
+                        <td>@context.Year</td>
+                        <td>@context.WeekNumber</td>
+                        <td style="width:50%;">@context.Start - @context.End</td>
+                        <td class="text-left">
+                            <MatButton Raised="true" Label="Adatok módosítása" OnClick="(() => NavigateToWeekNumberManager(context.Year, context.WeekNumber))" />
+                        </td>
+                    </MatTableRow>
+                </MatTable>
+            }
+            else
+            {
+                <DataFetchError ErrorMSG="Az adatbázisba nincs routing szünet feltöltve" />
+            }
+
+
+        }
+        else
+        {
+            <DataFetchError ErrorMSG="Nincsen feltöltve routing szünet az adatbázisba" />
+        }
+    }
+    else
+    {
+        <DataFetchError ErrorMSG="@State.Value.Errors.Errors.FirstOrDefault()?.ErrorMSG" />
+    }
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+@code
+{
+
+
+    public void NavigateToWeekNumberManager(int year, int weekNumber)
+    {
+        NavManager.NavigateTo($"routing/times/pause/{year}/{weekNumber}");
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Dispatcher.Dispatch(new RoutingPausesManagerPageSizeChangedAction(int.MaxValue));
+        Dispatcher.Dispatch(new LoadRoutingPausesManagersAction(State.Value.PageIndex, State.Value.PageSize));
+    }
+}

@@ -1,0 +1,146 @@
+﻿@page "/trams/{MachineID}"
+@layout TramManagerLayout
+
+@using OLM.Blazor.WASM.Store.TramManager.DataManager
+@using OLM.Blazor.WASM.Store.TramManager.DataManager.Actions
+@using OLM.Blazor.WASM.Services.Repositories.Abstractions.Tram
+@using OLM.Blazor.WASM.ViewModels.Tram
+@using OLM.Shared.Models.Tram.SharedAPIModels
+@using OLM.Shared.Models.Tram.SharedAPIModels.Extensions
+
+@inherits FluxorComponent
+
+@inject IState<TramDataManagerState> State
+@inject IDispatcher Dispatcher
+@inject ITramDataUploaderRepository TramUploaderRepository
+@inject IMatToaster Toaster
+
+@if (State.Value.Dimensions != default)
+{
+    @if (State.Value.Model != default)
+    {
+    <div class="mx-auto w-75">
+        <div class="trams-data-upload-header">
+            <span>Szabászsor @MachineID</span>
+        </div>
+
+        <EditForm Model="State.Value.Model" OnSubmit="() => Task.CompletedTask">
+
+            <ServerSideValidator @ref="_serverSideValidator" />
+
+            <div class="trams-data-upload-dimension-selector">
+                <span class="trams-data-upload-label">Válaszd ki a dimenziót</span>
+                <MatSelect Style="width:100%!important;" Label="Válaszd ki a dimenziót" @bind-Value="@State.Value.Model.Dimension" >
+                    <MatOptionString></MatOptionString>
+                    @foreach (var dim in State.Value.Dimensions)
+                    {
+                        <MatOptionString Value="@dim">@dim</MatOptionString>
+                    }
+                </MatSelect>
+                <ValidationMessage For="@(()=> State.Value.Model.Dimension)" />
+            </div>
+
+            <div class="trams-data-upload-form-control">
+                <span class="trams-data-upload-label">Csillék száma</span>
+                <MatNumericUpDownField FullWidth="true" Label="Csillék száma" @bind-Value="@State.Value.Model.NumberOfTrams" TValue="int" DecimalPlaces="0" Minimum="0" />
+                <ValidationMessage For="@(()=> State.Value.Model.NumberOfTrams)" />
+            </div>
+
+            <div class="trams-data-upload-form-control">
+                <span class="trams-data-upload-label">Kitett lamellák száma</span>
+                <MatNumericUpDownField FullWidth="true" Label="Kitett lamellák száma" @bind-Value="@State.Value.Model.NumberOfLamella" TValue="int" DecimalPlaces="0" Minimum="0" />
+                <ValidationMessage For="@(()=> State.Value.Model.NumberOfLamella)" />
+            </div>
+
+            <div class="trams-data-upload-form-control">
+                <span class="trams-data-upload-label">Válaszd ki a napot</span>
+                <MatDatePicker FullWidth="true" Label="Válaszd ki a napot" @bind-Value="@State.Value.Model.Date" TValue="DateTime" EnableTime="false" />
+            </div>
+
+            <div class="trams-data-upload-form-control d-flex flex-column align-items-center justify-content-center">
+                <span class="trams-data-upload-label">Válaszd ki a műszakot:</span>
+                <div>
+                    <MatRadioGroup @bind-Value="@State.Value.Model.Shift" Items="@(Enum.GetValues(typeof(ShiftTypes)).Cast<ShiftTypes>())"></MatRadioGroup>
+                    <ValidationMessage For="@(()=> State.Value.Model.Shift)" />
+                </div>
+            </div>
+
+            <div class="trams-data-upload-form-control">
+                <MatButton TrailingIcon="@MatIconNames.Add"
+                           OnClick="SubmitUpload"
+                           Raised="true">
+                    Feltöltés
+                </MatButton>
+            </div>
+
+
+        </EditForm>
+    </div>
+
+    }
+}
+else
+{
+    if (State.Value.Errors != default && State.Value.Errors.Errors.Any())
+    {
+        <DataFetchError ErrorMSG="@State.Value.Errors.Errors.FirstOrDefault()?.ErrorMSG" />
+    }
+    else
+    {
+        <span>Dimenziók betöltése...</span>
+        <AlwaysSpinner />
+    }
+}
+
+@code
+{
+    private EditContext _editContext;
+    private ServerSideValidator _serverSideValidator;
+
+    [Parameter]
+    public string MachineID { get; set; }
+
+    private void DispatchNewEmptyModel()
+    {
+        Dispatcher.Dispatch(new SetTramDataEditModelAction(
+            new TramDataEditViewModel() 
+            { 
+                Shift = DateTime.Now.GetShiftTypeForTime(), 
+                Date = DateTime.Today, 
+                MachineID = MachineID 
+            }));
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Dispatcher.Dispatch(new SetMachineIDAction(MachineID));
+        Dispatcher.Dispatch(new LoadDimensionsForTramDataAction());
+
+        DispatchNewEmptyModel();
+    }
+
+    private async Task SubmitUpload()
+    {
+        if (string.IsNullOrEmpty(State.Value.Model.Dimension) == false)
+        {
+            var result = await TramUploaderRepository.Upload(State.Value.Model);
+
+            if (result.Success == true)
+            {
+                Toaster.Add($"Sikeresen feltöltötted az új adatot", MatToastType.Success, $"Sikeres feltöltés");
+
+                DispatchNewEmptyModel();
+            }
+            else
+            {
+                _serverSideValidator.DisplayErrors(result.Errors);
+            }
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(new OLM.Services.SharedBases.APIErrors.APIError(nameof(State.Value.Model.Dimension), "Válassz ki egy dimenziót"));
+        }
+    }
+}

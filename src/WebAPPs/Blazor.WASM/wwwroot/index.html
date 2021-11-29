@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>OLM</title>
+    <base href="/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="css/BundlePage.css" rel="stylesheet" />
+    <link href="css/Spinner.css" rel="stylesheet" />
+    <link href="css/YellowBlinker.css" rel="stylesheet" />
+    <link href="manifest.json" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="logo-512.png" />
+    <script type="text/javascript" src="blazor.extensions.storage.js"></script>
+
+    <script src="_content/Fluxor.Blazor.Web/scripts/index.js"></script>
+    <script src="_content/MatBlazor/dist/matBlazor.js"></script>
+    <link href="_content/MatBlazor/dist/matBlazor.css" rel="stylesheet" />
+
+    <script src="_content/BlazorPro.BlazorSize/blazorSize.min.js"></script>
+
+    <script src="plotly.js/plotly-finance.min.js"></script>
+
+    <script src="myInterops.js"></script>
+</head>
+
+<body>
+    <app><div class="spinner"></div></app>
+
+    <div id="blazor-error-ui">
+        Hiba lépett fel a betöltés közben, az oldal újratöltése ajánlott
+        <a href="" class="reload">Újratöltés</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script defer src="_framework/blazor.webassembly.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
+</body>
+
+</html>

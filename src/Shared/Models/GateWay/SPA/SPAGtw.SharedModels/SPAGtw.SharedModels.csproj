@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>OLM.Shared.Models.GateWay.SPA.SPAGtw.SharedModels</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Bundles\OLM.Shared.Models.Bundles.BundleAPIModels\Bundles.APIResponses.csproj" />
+    <ProjectReference Include="..\..\..\CategoryBulbs\CategoryBulbs.APIResponses.Models\CategoryBulbs.APIResponses.csproj" />
+    <ProjectReference Include="..\..\..\Routing\Routing.SharedAPIModels\Routing.SharedAPIModels.csproj" />
+    <ProjectReference Include="..\..\..\TCO\OLM.Shared.Models.TCO.SharedAPIModels\TCO.SharedAPIModels.csproj" />
+  </ItemGroup>
+
+</Project>

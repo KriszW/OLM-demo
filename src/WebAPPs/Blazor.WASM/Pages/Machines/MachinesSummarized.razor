@@ -1,0 +1,60 @@
+﻿@page "/machines"
+
+@using Store.Machines.MachinesSummarized
+@using Store.Machines.MachinesSummarized.Actions
+
+@inherits FluxorComponent
+
+@inject IState<MachineSummerizedState> _state
+@inject IDispatcher _dispatcher
+
+@if (_state.Value.IsLoading == false)
+{
+    @if (_state.Value.Response != default)
+    {
+        <div class="machines">
+            @if (_state.Value.Response?.Model?.Daily != default)
+            {
+                <DailySummarizedData Bundle="_state.Value.Response.Model.Daily" />
+            }
+            else
+            {
+                @foreach (var item in _state.Value?.Response?.Errors?.Errors)
+                {
+                    @if (item?.FieldName == "daily")
+                    {
+                        <BundleIsEmptyError ErrorMSG=@item.ErrorMSG />
+                    }
+                }
+            }
+
+            @if (_state.Value.Response?.Model?.Weekly != default)
+            {
+                <WeeklySummarizedData Bundle="_state.Value.Response.Model.Weekly" />
+            }
+            else
+            {
+                @foreach (var item in _state.Value?.Response?.Errors?.Errors)
+                {
+                    @if (item?.FieldName == "weekly")
+                    {
+                        <BundleIsEmptyError ErrorMSG=@item.ErrorMSG />
+                    }
+                }
+            }
+        </div>
+    }
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _dispatcher.Dispatch(new StartFetchSummarizedDataAction());
+    }
+}

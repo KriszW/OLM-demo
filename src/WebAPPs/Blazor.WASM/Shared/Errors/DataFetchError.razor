@@ -1,0 +1,12 @@
+﻿
+@if (string.IsNullOrEmpty(ErrorMSG) == false)
+{
+    <div class="alert-danger m-auto text-center fetch-error">
+        @ErrorMSG
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string ErrorMSG { get; set; }
+}

@@ -1,0 +1,75 @@
+﻿@page "/user/login"
+
+@using Store.Account.Login
+@using Store.Account.Login.Actions
+
+@inherits FluxorComponent
+
+@inject NavigationManager _navigationManager
+@inject IAuthenticationService _authService
+
+@inject IState<LoginState> _state
+@inject IDispatcher _dispatcher
+
+
+<div class="container">
+    <h1 class="text-center">Bejelentkezés</h1>
+    <EditForm Model="@_loginModel" OnSubmit="@SubmitLogin">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (string.IsNullOrEmpty(_state.Value.ErrorMSG) == false)
+        {
+            <DataFetchError ErrorMSG="@_state.Value.ErrorMSG" />
+        }
+
+        <div class="form-group">
+            <MatTextField Class="w-100" Label="Felhasználónév" @bind-Value="_loginModel.UserName" PlaceHolder="Felhasználóneved" Type="text" TValue="string" />
+        </div>
+        <div class="form-group">
+            <MatTextField Class="w-100" Label="Jelszó" @bind-Value="_loginModel.Password" PlaceHolder="Jelszavad" Type="password" TValue="string" />
+        </div>
+        <div class="form-group">
+            <MatCheckbox Class="w-100" Label="Emlékezzen rám?" TValue="bool" @bind-Value="_loginModel.RememberMe"/>
+        </div>
+        <div class="form-group">
+            <MatButton Class="w-100" Raised="true" Type="submit">Bejelentkezés</MatButton>
+        </div>
+    </EditForm>
+</div>
+
+
+@if (_state.Value.LoginSucceeded)
+{
+    <RedirectToComponent RedirectURL="@ReturnUrl" />
+}
+
+@code {
+    [Parameter]
+    public string ReturnUrl { get; set; }
+
+    private Action NavigateBack;
+
+    private LoginViewModel _loginModel = new LoginViewModel();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        NavigateBack = new Action(NavigateAfterSuccessfulLogin);
+
+        _dispatcher.Dispatch(new LoginInitAction(ReturnUrl));
+    }
+
+    public void SubmitLogin()
+    {
+        _dispatcher.Dispatch(new StartSendLoginAction(_loginModel));
+    }
+
+    private void NavigateAfterSuccessfulLogin()
+    {
+        var returnUri = _state.Value.ReturnURL ?? _navigationManager.BaseUri;
+        _navigationManager.NavigateTo(returnUri);
+    }
+}

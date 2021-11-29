@@ -1,0 +1,175 @@
+﻿
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
+
+<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">OLM</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <MatIcon Icon="@MatIconNames.Home" Class="menuicons" /> Kezdőlap
+            </NavLink>
+        </li>
+
+        <li class="nav-item px-3 ml-3">
+            <DropDownMenu>
+                <HeaderContent>
+                    <div class="w-100">
+                        <NavLink href="machines" Match="NavLinkMatch.All">
+                            <MatIcon Icon="@MatIconNames.Apps" Class="menuicons" /> Gépek
+                        </NavLink>
+                    </div>
+                </HeaderContent>
+                <DropDownMenuContent>
+                    <NavLink class="nav-link ml-2" href="machine/1" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Tv" Class="menuicons" /> 1-es gép adatok
+                    </NavLink>
+                    <NavLink class="nav-link ml-2" href="machine/2" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Tv" Class="menuicons" /> 2-es gép adatok
+                    </NavLink>
+                    <NavLink class="nav-link ml-2 mb-3" href="machine/3" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Tv" Class="menuicons" /> 3-es gép adatok
+                    </NavLink>
+                </DropDownMenuContent>
+            </DropDownMenu>
+        </li>
+
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="/tcobundle" Match="NavLinkMatch.All">
+                <MatIcon Icon="@MatIconNames.Tv" Class="menuicons" /> TCO Rakat adatok
+            </NavLink>
+        </li>
+
+        <li class="nav-item px-3 ml-3">
+            <DropDownMenu>
+                <HeaderContent>
+                    <MatIcon Icon="@MatIconNames.Dashboard" Class="menuicons" /> Reportok
+                </HeaderContent>
+                <DropDownMenuContent>
+                    <NavLink class="nav-link ml-2" href="report/followup/dimension/week" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Heti dim selejt
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="report/followup/weekly/day" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Heti selejt össz
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="report/followup/yearly/weeks" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Éves selejt össz
+                    </NavLink>
+                </DropDownMenuContent>
+            </DropDownMenu>
+        </li>
+
+        <li class="nav-item px-3 ml-3">
+            <DropDownMenu>
+                <HeaderContent>
+                    <div class="w-100">
+                        <NavLink href="routing" Match="NavLinkMatch.All">
+                            <MatIcon Icon="@MatIconNames.Apps" Class="menuicons" /> Routing
+                        </NavLink>
+                    </div>
+                </HeaderContent>
+                <DropDownMenuContent>
+                    <NavLink class="nav-link ml-2" href="routing/days" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Napi
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/weeks" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Heti
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/1" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Sor 1
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/2" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Sor 2
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/3" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Sor 3
+                    </NavLink>
+                </DropDownMenuContent>
+            </DropDownMenu>
+        </li>
+
+        <li class="nav-item px-3 ml-3">
+            <DropDownMenu>
+                <HeaderContent>
+                    <div class="w-100">
+                        <NavLink href="routing/aggregated" Match="NavLinkMatch.All">
+                            <MatIcon Icon="@MatIconNames.Apps" Class="menuicons" /> Összesített Routing
+                        </NavLink>
+                    </div>
+                </HeaderContent>
+                <DropDownMenuContent>
+                    <NavLink class="nav-link ml-2" href="routing/aggregated/days" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Napi
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/aggregated/weeks" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Heti
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/aggregated/1" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Sor 1
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/aggregated/2" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Sor 2
+                    </NavLink>
+
+                    <NavLink class="nav-link ml-2" href="routing/aggregated/3" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Bar_chart" Class="menuicons" /> Sor 3
+                    </NavLink>
+                </DropDownMenuContent>
+            </DropDownMenu>
+        </li>
+
+        <AuthorizeView>
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="/managers" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Add" Class="menuicons" /> Adat managerek
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <div class="loggedin d-flex flex-column justify-content-center align-items-center text-white">
+                        <span>Szia, @context.User.Identity.Name!</span>
+                        <div class="d-flex justify-content-center align-items-center">
+                            <MatIcon Icon="@MatIconNames.Exit_to_app" Class="menuicons" /> <a href="/user/logout" class="w-75">Kijelentkezés</a>
+                        </div>
+                    </div>
+                </li>
+            </Authorized>
+            <NotAuthorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="/user/login" Match="NavLinkMatch.All">
+                        <MatIcon Icon="@MatIconNames.Perm_identity" Class="menuicons" /> Bejelentkezés
+                    </NavLink>
+                </li>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="/settings" Match="NavLinkMatch.All">
+                <MatIcon Icon="@MatIconNames.Settings" Class="menuicons" /> Beállítások
+            </NavLink>
+        </li>
+    </ul>
+</div>

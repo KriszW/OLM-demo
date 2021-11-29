@@ -1,0 +1,134 @@
+version: '3.4'
+
+services:
+  identity.api:
+    image: ${DOCKER_REGISTRY-}identityapi
+    build:
+      context: .
+      dockerfile: Services/Identity/Identity.API/Dockerfile
+
+  bundles.api:
+    image: ${DOCKER_REGISTRY-}bundlesapi
+    build:
+      context: .
+      dockerfile: Services/Bundles/Bundles.API/Dockerfile
+
+
+  web.gtw.spa:
+    image: ${DOCKER_REGISTRY-}webgtwspa
+    build:
+      context: .
+      dockerfile: ApiGateWays/SPA/OLM.Web.Gtw.SPA/Dockerfile
+
+
+  tco.api:
+    image: ${DOCKER_REGISTRY-}tcoapi
+    build:
+      context: .
+      dockerfile: Services/TCO/OLM.TCO.API/Dockerfile
+
+
+  categorybulbs.api:
+    image: ${DOCKER_REGISTRY-}categorybulbsapi
+    build:
+      context: .
+      dockerfile: Services/CategoryBulbs/OLM.Services.CategoryBulbs.API/Dockerfile
+
+
+  dailyreport.api:
+    image: ${DOCKER_REGISTRY-}dailyreportapi
+    build:
+      context: .
+      dockerfile: Services/DailyReport/OLM.Services.DailyReport.API/Dockerfile
+
+
+  target.api:
+    image: ${DOCKER_REGISTRY-}targetapi
+    build:
+      context: .
+      dockerfile: Services/Target/Target.API/Dockerfile
+
+
+  moneyexchangerate.api:
+    image: ${DOCKER_REGISTRY-}moneyexchangerateapi
+    build:
+      context: .
+      dockerfile: Services/MoneyExchangeRate/OLM.Services.MoneyExchangeRate.API/Dockerfile
+
+  bundles-prices.api:
+    image: ${DOCKER_REGISTRY-}bundlespricesapi
+    build:
+      context: .
+      dockerfile: Services/BundlesPrice/Bundles.Prices.API/Dockerfile
+
+  tram.api:
+    image: ${DOCKER_REGISTRY-}tramapi
+    build:
+      context: .
+      dockerfile: Services/Tram/Tram.API/Dockerfile
+
+  tco.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}tcobackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/TCO/BackgroundTasks/TCO.BackgroundTasks.Updater/Dockerfile
+
+  routing.api:
+    image: ${DOCKER_REGISTRY-}routingapi
+    build:
+      context: .
+      dockerfile: Services/Routing/Routing.API/Dockerfile
+
+  routing-time.api:
+    image: ${DOCKER_REGISTRY-}routingtimeapi
+    build:
+      context: .
+      dockerfile: Services/RoutingTime/RoutingTime.API/Dockerfile
+
+
+  routing-data.api:
+    image: ${DOCKER_REGISTRY-}routingdataapi
+    build:
+      context: .
+      dockerfile: Services/RoutingData/RoutingData.API/Dockerfile
+
+  bundles.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}bundlesbackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/Bundles/BackgroundTasks/Bundles.BackgroundTasks/Dockerfile
+
+
+  categorybulbs.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}categorybulbsbackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/CategoryBulbs/BackgroundTasks/CategoryBulbs.BackgroundTasks.Updater/Dockerfile
+
+
+  bundles.prices.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}bundlespricesbackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/BundlesPrice/BackgroundTasks/Bundles.Prices.BackgroundTasks.Updater/Dockerfile
+
+  dailyreport.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}dailyreportbackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/DailyReport/BackgroundTasks/DailyReport.BackgroundTasks.Updater/Dockerfile
+
+
+  routingdata.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}routingdatabackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/RoutingData/BackgroundTasks/RoutingData.BackgroundTasks.Updater/Dockerfile
+
+
+  routingtime.backgroundtasks.updater:
+    image: ${DOCKER_REGISTRY-}routingtimebackgroundtasksupdater
+    build:
+      context: .
+      dockerfile: Services/RoutingTime/BackgroundTasks/RoutingTime.BackgroundTasks.Updater/Dockerfile
+

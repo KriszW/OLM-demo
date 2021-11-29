@@ -1,0 +1,36 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div id="@GaugeID" style="@cssHeightString"></div>
+
+@code{
+    [Parameter]
+    public string GaugeID { get; set; }
+
+    [Parameter]
+    public TCODataViewModel TCO { get; set; }
+
+    [Parameter]
+    public int Height { get; set; }
+
+    private string cssHeightString => $"height:{Height}px;";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var actTCO = TCO.RealValue;
+        var expTCO = TCO.Expected;
+        var maxDiff = TCO.MaximumDifference;
+
+        var maxTCO = 450;
+
+        await JSRuntime.InvokeVoidAsync("drawGauge", new
+        {
+            MaxTCO = maxTCO,
+            TCO = actTCO,
+            ExpectedTCO = expTCO,
+            MinAcceptableTCO = expTCO - TCO.MaximumDifference,
+            MaxAcceptableTCO = expTCO + TCO.MaximumDifference,
+            DivID = GaugeID
+        });
+    }
+
+}

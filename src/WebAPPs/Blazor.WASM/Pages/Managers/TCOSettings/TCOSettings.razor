@@ -1,0 +1,233 @@
+﻿@page "/tco/settings"
+
+@using OLM.Blazor.WASM.Store.Manager.TCOSettings
+@using OLM.Blazor.WASM.Store.Manager.TCOSettings.Actions
+@using OLM.Shared.Models.TCO.SharedAPIModels.TCO.TCOSettings
+@using OLM.Blazor.WASM.Services.Repositories.Abstractions.TCO.TCOSettings
+
+@attribute [Authorize]
+@inherits FluxorComponent
+
+@inject IState<TCOSettingsManagerState> State
+@inject IDispatcher Dispatcher
+@inject ITCOValueSettingsRepository TCOValueRepo
+@inject IMatToaster Toaster
+
+@if (State.Value.IsLoading == false)
+{
+    if (State.Value.Errors == default)
+    {
+        if (State.Value.Data != default)
+        {
+            if (State.Value.Data.Data != default)
+            {
+                <h1>Cikk TCO beállítások módosítása</h1>
+                <MatButton Raised="true" TrailingIcon="@MatIconNames.Add" OnClick="UploadNewPrice">Új cikk TCO beállítás feltöltése</MatButton>
+
+                <MatTable Items="State.Value.Data.Data"
+                          PageSize="State.Value.PageSize"
+                          Striped="true"
+                          AllowSelection="false"
+                          ShowPaging="false"
+                          Class="text-center">
+
+                    <MatTableHeader>
+                        <th>Cikkszám</th>
+                        <th>Elvárt TCOérték</th>
+                        <th>Maximum különbség</th>
+                        <th>Akciók</th>
+                    </MatTableHeader>
+                    <MatTableRow>
+                        <td>@context.RawMaterialItemNumber</td>
+                        <td>@context.ExpectedTCOValue Ft/M</td>
+                        <td>@context.MaximumDifference Ft/M</td>
+                        <td class="text-left">
+                            <MatButton Raised="true" Label="" OnClick="@(() => EditPrice(context) )" Icon="@MatIconNames.Edit" />
+                            <MatButton Raised="true" Label="" OnClick="@(()=> DeletePrice(context))" Icon="@MatIconNames.Delete" />
+                        </td>
+                    </MatTableRow>
+                </MatTable>
+
+                <MatPaginator Length="(int)State.Value.Data.TotalItemCount"
+                              PageSize="State.Value.PageSize"
+                              Page="PageChanged"
+                              Label=""
+                              PageLabel="" />
+            }
+            else
+            {
+                <DataFetchError ErrorMSG="Az adatbázisba nincs TCO beállítás feltöltve egy cikkhez sem" />
+            }
+
+
+        }
+        else
+        {
+            <DataFetchError ErrorMSG="Nincsen feltöltve TCO beállítás az adatbázisba egy cikkhez sem" />
+        }
+    }
+    else
+    {
+        <DataFetchError ErrorMSG="@State.Value.Errors.Errors.FirstOrDefault()?.ErrorMSG" />
+    }
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+@if (State.Value.SelectedModelForDelete != default)
+{
+    <MatDialog @bind-IsOpen="isDeleteDialogOpen">
+        <MatDialogTitle>
+            A @State.Value.SelectedModelForDelete.RawMaterialItemNumber cikkhez a TCO beállítás törlése
+        </MatDialogTitle>
+        <MatDialogContent>
+            A törlés végleges, már nem lesz lehetőséged visszavonni a 'Törlés' gomb megnyomása után
+        </MatDialogContent>
+        <MatDialogActions>
+            <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelDelete">Mégsem</MatButton>
+            <MatButton TrailingIcon="@MatIconNames.Delete" OnClick="SubmitDelete">Törlés</MatButton>
+        </MatDialogActions>
+    </MatDialog>
+}
+
+@if (State.Value.ModelForEdit != default)
+{
+    <MatDialog @bind-IsOpen="isModifyDialogOpen">
+        <MatDialogTitle>
+            @($"{(State.Value.ModelForEdit.ID == default ? "Új TCO beállítás hozzáadása egy új cikkhez" : $"{State.Value.ModelForEdit.RawMaterialItemNumber} cikkhez a TCO beállítások módosítása")}")
+        </MatDialogTitle>
+        <EditForm Model="State.Value.ModelForEdit" OnSubmit="() => Task.CompletedTask">
+            <ServerSideValidator @ref="_serverSideValidator" />
+            <MatDialogContent>
+                <MatTextField Label="Beérkező fa anyag cikkszáma" @bind-Value="@State.Value.ModelForEdit.RawMaterialItemNumber" TValue="string" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.RawMaterialItemNumber)" />
+                <MatNumericUpDownField Label="Az elvárt TCO Érték (Ft/M)-ben" DecimalPlaces="2" Minimum="0" @bind-Value="@State.Value.ModelForEdit.ExpectedTCOValue" TValue="double" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.ExpectedTCOValue)" />
+                <MatNumericUpDownField Label="A maximum eltérés az elvárt TCO Értéktől (Ft/M)-ben" DecimalPlaces="2" Minimum="0" @bind-Value="@State.Value.ModelForEdit.MaximumDifference" TValue="double" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.MaximumDifference)" />
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelModify">Mégsem</MatButton>
+                <MatButton TrailingIcon="@($"{(State.Value.ModelForEdit.ID == default ? MatIconNames.Add : MatIconNames.Edit )}")"
+                           OnClick="SubmitEdit">
+                    @($"{(State.Value.ModelForEdit.ID == default ? "Feltöltés" : "Módosítás")}")
+                </MatButton>
+            </MatDialogActions>
+        </EditForm>
+    </MatDialog>
+}
+
+@code{
+
+    private EditContext _editContext;
+    private ServerSideValidator _serverSideValidator;
+    private bool isDeleteDialogOpen = false;
+    private bool isModifyDialogOpen = false;
+
+    private void CancelDelete() => isDeleteDialogOpen = false;
+    private void CancelModify()
+    {
+        isModifyDialogOpen = false;
+        UpdateItems();
+    }
+
+    private void PageChanged(MatPaginatorPageEvent e)
+    {
+        Dispatcher.Dispatch(new PageIndexChangedAction(e.PageIndex));
+        Dispatcher.Dispatch(new PageSizeChangedAction(e.PageSize));
+        UpdateItems();
+    }
+
+    private void UploadNewPrice()
+    {
+        Dispatcher.Dispatch(new EditTCOSettingsModelAction(new TCOSettingsViewModel()));
+
+        isModifyDialogOpen = true;
+    }
+
+    private void EditPrice(TCOSettingsViewModel model)
+    {
+        Dispatcher.Dispatch(new EditTCOSettingsModelAction(model));
+
+        isModifyDialogOpen = true;
+    }
+
+    private async Task SubmitEdit()
+    {
+        var isAddNewModel = State.Value.ModelForEdit.ID == default;
+
+        if (isAddNewModel == true)
+        {
+            await UploadNewModel(State.Value.ModelForEdit);
+        }
+        else
+        {
+            await EditNewModel(State.Value.ModelForEdit);
+        }
+    }
+
+    private async Task UploadNewModel(TCOSettingsViewModel model)
+    {
+        var result = await TCOValueRepo.Upload(model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen feltöltötted a {model.RawMaterialItemNumber} cikkhez az új TCO beállításokat", MatToastType.Success, $"Sikeres feltöltés");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private async Task EditNewModel(TCOSettingsViewModel model)
+    {
+        var result = await TCOValueRepo.Modify(model.ID.GetValueOrDefault(), model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen módosítottad a {model.RawMaterialItemNumber} cikkhez a TCO beállításokat", MatToastType.Success, $"Sikeres módosítás");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private void DeletePrice(TCOSettingsViewModel model)
+    {
+        isDeleteDialogOpen = true;
+        Dispatcher.Dispatch(new TCOSettingsForDeletingAction(model));
+    }
+
+    private async Task SubmitDelete()
+    {
+        var result = await TCOValueRepo.Delete(State.Value.SelectedModelForDelete.ID.GetValueOrDefault());
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen törölted a {State.Value.SelectedModelForDelete.RawMaterialItemNumber} cikkhez a TCO beállításokat", MatToastType.Success, $"Sikeres törlés");
+        }
+        else
+        {
+            Toaster.Add($"A törlés nem sikerült, mert: {result.Message}", MatToastType.Danger, "Sikertelen törlés");
+        }
+
+        isDeleteDialogOpen = false;
+        UpdateItems();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        UpdateItems();
+    }
+
+    private void UpdateItems() => Dispatcher.Dispatch(new LoadTCOSettingsAction(State.Value.PageIndex, State.Value.PageSize));
+}

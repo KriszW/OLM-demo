@@ -1,0 +1,414 @@
+﻿@page "/routing/times/pause/{Year:int}/{WeekNumber:int}"
+
+@using OLM.Blazor.WASM.Store.Manager.Routing.Times.InduvidualManagers.RoutingPause
+@using OLM.Blazor.WASM.Store.Manager.Routing.Times.InduvidualManagers.RoutingPause.Actions
+@using OLM.Shared.Models.RoutingTime.SharedAPIModels.Response.DataModel
+@using OLM.Blazor.WASM.Services.Repositories.Abstractions.Routing.Manager.Times
+@using OLM.Blazor.WASM.ViewModels.RoutingTimeManager 
+
+@attribute [Authorize]
+@inherits FluxorComponent
+
+@inject IState<PausesPageState> State
+@inject IDispatcher Dispatcher
+@inject IRoutingPauseManagerRepository RoutingPauseManagerRepository
+@inject IMatToaster Toaster
+@inject NavigationManager NavManager
+
+@if (State.Value.IsLoading == false)
+{
+    if (State.Value.Errors == default)
+    {
+        if (State.Value.Data != default)
+        {
+            if (State.Value.Data.Data != default)
+            {
+                <h1>Routing szünetek módosítása a @WeekNumber héthez a @(Year). évben</h1>
+                <div class="d-flex align-items-center justify-content-between">
+                    <MatButton Raised="true" TrailingIcon="@MatIconNames.Add" OnClick="UploadNewPrice">Új Routing szünetek feltöltése</MatButton>
+                    <MatButton Raised="true" TrailingIcon="@MatIconNames.Add" OnClick="StartManipulateMultiple">Több Routing szünet módosítása</MatButton>
+                </div>
+                
+
+                <MatTable Items="State.Value.Data.Data"
+                          PageSize="State.Value.PageSize"
+                          Striped="true"
+                          AllowSelection="false"
+                          ShowPaging="false"
+                          Class="text-center">
+
+                    <MatTableHeader>
+                        <th>Nap</th>
+                        <th>Kezdet</th>
+                        <th>Vég</th>
+                        <th>Gépszám</th>
+                        <th>Hétszám</th>
+                        <th>Akciók</th>
+                    </MatTableHeader>
+                    <MatTableRow>
+                        <td>@context.Day.ToLocalizedName()</td>
+                        <td style="width:10%;">@context.Start</td>
+                        <td style="width:10%;">@context.End</td>
+                        <td>@context.MachineName</td>
+                        <td>@context.WeekNumber</td>
+                        <td class="text-left">
+                            <MatButton Raised="true" Label="" OnClick="@(() => EditPrice(context) )" Icon="@MatIconNames.Edit" />
+                            <MatButton Raised="true" Label="" OnClick="@(()=> DeletePrice(context))" Icon="@MatIconNames.Delete" />
+                        </td>
+                    </MatTableRow>
+                </MatTable>
+
+                <div class="d-flex align-items-center justify-content-between">
+                    <MatButton Raised="true" OnClick="() => NavigateBack()">Vissza</MatButton>
+
+                    <MatPaginator Length="(int)State.Value.Data.TotalItemCount"
+                                  PageSize="State.Value.PageSize"
+                                  Page="PageChanged"
+                                  Label=""
+                                  PageLabel="" />
+                </div>
+            }
+            else
+            {
+                <DataFetchError ErrorMSG="Az adatbázisba nincs Routing szünetek feltöltve" />
+            }
+
+
+        }
+        else
+        {
+            <DataFetchError ErrorMSG="Nincsen feltöltve Routing szünetek az adatbázisba" />
+        }
+    }
+    else
+    {
+        <DataFetchError ErrorMSG="@State.Value.Errors.Errors.FirstOrDefault()?.ErrorMSG" />
+    }
+}
+else
+{
+    <AlwaysSpinner />
+}
+
+@if (State.Value.SelectedModelForDelete != default)
+{
+    <MatDialog @bind-IsOpen="isDeleteDialogOpen">
+        <MatDialogTitle>
+            A '@State.Value.SelectedModelForDelete.Day.ToLocalizedName()' napon a @State.Value.SelectedModelForDelete.Start - @State.Value.SelectedModelForDelete.End Routing szünetek törlése
+        </MatDialogTitle>
+        <MatDialogContent>
+            A törlés végleges, már nem lesz lehetőséged visszavonni a 'Törlés' gomb megnyomása után
+        </MatDialogContent>
+        <MatDialogActions>
+            <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelDelete">Mégsem</MatButton>
+            <MatButton TrailingIcon="@MatIconNames.Delete" OnClick="SubmitDelete">Törlés</MatButton>
+        </MatDialogActions>
+    </MatDialog>
+}
+
+@if (State.Value.ModelForEdit != default)
+{
+    <MatDialog @bind-IsOpen="isModifyDialogOpen">
+        <MatDialogTitle>
+            @($"{(State.Value.ModelForEdit.ID == default ? "Új Routing szünetek hozzáadása" : $"'{State.Value.ModelForEdit.Day.ToLocalizedName()}' {State.Value.ModelForEdit.Start} - {State.Value.ModelForEdit.Day} Routing szünetek módosítása")}")
+        </MatDialogTitle>
+        <EditForm Model="State.Value.ModelForEdit" OnSubmit="() => Task.CompletedTask">
+
+            <ServerSideValidator @ref="_serverSideValidator" />
+
+            <MatDialogContent>
+
+                <MatRadioGroup @bind-Value="@State.Value.ModelForEdit.Day" Items="@(Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>())"></MatRadioGroup>
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Day)" />
+
+                <MatDatePicker Label="Kezdet" @bind-Value="@State.Value.StartForModifyLocalized" TValue="DateTime" EnableTime="true" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.Start)" />
+
+                <MatDatePicker Label="Vég" @bind-Value="@State.Value.EndForModifyLocalized" TValue="DateTime" EnableTime="true" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.End)" />
+
+                <MatTextField Label="Gépszám" @bind-Value="@State.Value.ModelForEdit.MachineName" TValue="string" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.MachineName)" />
+
+                <MatNumericUpDownField Label="Hétszám" @bind-Value="@State.Value.ModelForEdit.WeekNumber" Minimum="1" Maximum="53" TValue="int" />
+                <ValidationMessage For="@(()=> State.Value.ModelForEdit.WeekNumber)" />
+
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelModify">Mégsem</MatButton>
+                <MatButton TrailingIcon="@($"{(State.Value.ModelForEdit.ID == default ? MatIconNames.Add : MatIconNames.Edit )}")"
+                           OnClick="SubmitEdit">
+                    @($"{(State.Value.ModelForEdit.ID == default ? "Feltöltés" : "Módosítás")}")
+                </MatButton>
+            </MatDialogActions>
+        </EditForm>
+    </MatDialog>
+}
+
+@if(State.Value.Data != default)
+{
+    <MatDialog @bind-IsOpen="isMultipleModifyDialogOpen">
+        <MatDialogTitle>
+            @($"{WeekNumber}. héthez a {Year}. évben több Routing szünet módosítása")
+        </MatDialogTitle>
+        <EditForm Model="_multModel" OnSubmit="() => Task.CompletedTask">
+
+            <ServerSideValidator @ref="_serverSideValidator" />
+
+            <MatDialogContent>
+
+                <div class="d-flex flex-grow-1 flex-column align-items-baseline">
+
+                    <h2 class="align-self-center">Napok</h2>
+
+                    @foreach (var item in Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>())
+                    {
+                        <MatCheckbox Label="@item.ToLocalizedName()" TValue="bool" ValueExpression="() => _machineNamecheckBoxValue" ValueChanged="(value) => ManipulteDays(value, item)" />
+                    }
+                </div>
+
+                <MatDatePicker Label="Kezdet" @bind-Value="@_multModel.Start" TValue="DateTime" EnableTime="true" />
+                <ValidationMessage For="@(()=> _multModel.Start)" />
+
+                <MatDatePicker Label="Vég" @bind-Value="@_multModel.End" TValue="DateTime" EnableTime="true" />
+                <ValidationMessage For="@(()=> _multModel.End)" />
+
+                <div class="d-flex flex-grow-1 flex-column align-items-baseline">
+                    @{
+                        var machineNames = State.Value.Data.Data != default ? State.Value.Data.Data.Select(m => m.MachineName).Distinct() : new string[] { "1", "2", "3" };
+                    }
+
+                    <h2 class="align-self-center">Gépek</h2>
+
+                    @foreach (var item in machineNames)
+                    {
+                        <MatCheckbox Label="@item" TValue="bool" ValueExpression="() => _machineNamecheckBoxValue" ValueChanged="(value) => ManipulteMachineNames(value, item)" />
+                    }
+                </div>
+
+                <MatNumericUpDownField Label="Hétszám" @bind-Value="@_multModel.WeekNumber" Minimum="1" Maximum="53" TValue="int" />
+                <ValidationMessage For="@(()=> _multModel.WeekNumber)" />
+
+            </MatDialogContent>
+            <MatDialogActions>
+                <MatButton TrailingIcon="@MatIconNames.Cancel" OnClick="CancelMultModify" Label="Mégsem" />
+                <MatButton TrailingIcon="@MatIconNames.Add" OnClick="SubmitMultEdit" Label="Feltöltés" />
+            </MatDialogActions>
+        </EditForm>
+    </MatDialog>
+}
+
+
+
+@code
+{
+    [Parameter]
+    public int WeekNumber { get; set; }
+
+    [Parameter]
+    public int Year { get; set; }
+
+    private SummarizedRoutingManagerViewModel _multModel;
+
+    private EditContext _editContext;
+    private ServerSideValidator _serverSideValidator;
+    private bool isDeleteDialogOpen = false;
+    private bool isModifyDialogOpen = false;
+    private bool isMultipleModifyDialogOpen = false;
+
+    private bool _machineNamecheckBoxValue = false;
+
+    private void StartManipulateMultiple()
+    {
+        isMultipleModifyDialogOpen = true;
+    }
+
+    private void ManipulteDays(bool newValue, DayOfWeek day)
+    {
+        if (newValue) AddNewDay(day);
+        else RemoveDay(day);
+    }
+
+    private void AddNewDay(DayOfWeek day) => _multModel.Days.Add(day);
+
+    private void RemoveDay(DayOfWeek day) => _multModel.Days.Remove(day);
+
+    private void ManipulteMachineNames(bool newValue, string machineName)
+    {
+        if (newValue) AddNewMachineNames(machineName);
+        else RemoveMachineNames(machineName);
+    }
+
+    private void AddNewMachineNames(string machineName) => _multModel.MachineNames.Add(machineName);
+
+    private void RemoveMachineNames(string machineName) => _multModel.MachineNames.Remove(machineName);
+
+    private void CancelDelete() => isDeleteDialogOpen = false;
+    private void CancelModify()
+    {
+        isModifyDialogOpen = false;
+        UpdateItems();
+    }
+
+    private void CancelMultModify()
+    {
+        isMultipleModifyDialogOpen = false;
+        UpdateItems();
+    }
+
+    private void PageChanged(MatPaginatorPageEvent e)
+    {
+        Dispatcher.Dispatch(new PausePageIndexChangedAction(e.PageIndex));
+        Dispatcher.Dispatch(new PausePageSizeChangedAction(e.PageSize));
+
+        UpdateItems();
+    }
+
+    private void NavigateBack()
+    {
+        NavManager.NavigateTo("managers");
+    }
+
+    private void UploadNewPrice()
+    {
+        Dispatcher.Dispatch(new ChangePauseModelAction(new PauseDataViewModel
+        {
+            Start = DateTime.Now,
+            End = DateTime.Now,
+            Day = DateTime.Now.DayOfWeek,
+            WeekNumber = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.Now, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday)
+        }));
+
+        isModifyDialogOpen = true;
+    }
+
+    private void EditPrice(PauseDataViewModel model)
+    {
+        Dispatcher.Dispatch(new ChangePauseModelAction(model));
+
+        isModifyDialogOpen = true;
+    }
+
+    private async Task SubmitEdit()
+    {
+        var isAddNewModel = State.Value.ModelForEdit.ID == default;
+
+        if (isAddNewModel == true)
+        {
+            await UploadNewModel(State.Value.ModelForEdit);
+        }
+        else
+        {
+            await EditNewModel(State.Value.ModelForEdit);
+        }
+    }
+
+    private async Task SubmitMultEdit()
+    {
+        var models = CreateModelsFromMult();
+
+        Parallel.ForEach(models, async (model) =>
+        {
+            var result = await RoutingPauseManagerRepository.Upload(model);
+
+            if (result.Success == true)
+            {
+                Toaster.Add($"Sikeresen frissítetted a '{model.Day.ToLocalizedName()}' {model.Start} - {model.Day} Routing szüneteket", MatToastType.Success, $"Sikeres feltöltés");
+            }
+            else
+            {
+                _serverSideValidator.DisplayErrors(result.Errors);
+            }
+        });
+
+        isMultipleModifyDialogOpen = false;
+        UpdateItems();
+    }
+
+    private IEnumerable<PauseDataViewModel> CreateModelsFromMult()
+    {
+        var output = new List<PauseDataViewModel>();
+
+        foreach (var machineName in _multModel.MachineNames)
+        {
+            foreach (var day in _multModel.Days)
+            {
+                output.Add(new PauseDataViewModel
+                {
+                    Day = day,
+                    MachineName = machineName,
+                    Start = _multModel.Start,
+                    End = _multModel.End,
+                    WeekNumber = _multModel.WeekNumber,
+                });
+            }
+        }
+
+        return output;
+    }
+
+    private async Task UploadNewModel(PauseDataViewModel model)
+    {
+        var result = await RoutingPauseManagerRepository.Upload(model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen feltöltötted a '{State.Value.ModelForEdit.Day.ToLocalizedName()}' {State.Value.ModelForEdit.Start} - {State.Value.ModelForEdit.Day} Routing szünetekt", MatToastType.Success, $"Sikeres feltöltés");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private async Task EditNewModel(PauseDataViewModel model)
+    {
+        var result = await RoutingPauseManagerRepository.Modify(model.ID.GetValueOrDefault(), model);
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen módosítottad a '{State.Value.ModelForEdit.Day.ToLocalizedName()}' {State.Value.ModelForEdit.Start} - {State.Value.ModelForEdit.Day} Routing szünetekt", MatToastType.Success, $"Sikeres módosítás");
+            isModifyDialogOpen = false;
+            UpdateItems();
+        }
+        else
+        {
+            _serverSideValidator.DisplayErrors(result.Errors);
+        }
+    }
+
+    private void DeletePrice(PauseDataViewModel model)
+    {
+        isDeleteDialogOpen = true;
+        Dispatcher.Dispatch(new PauseModelForDeletingSetAction(model));
+    }
+
+    private async Task SubmitDelete()
+    {
+        var result = await RoutingPauseManagerRepository.Delete(State.Value.SelectedModelForDelete.ID.GetValueOrDefault());
+
+        if (result.Success == true)
+        {
+            Toaster.Add($"Sikeresen törölted a '{State.Value.ModelForEdit.Day.ToLocalizedName()}' {State.Value.ModelForEdit.Start} - {State.Value.ModelForEdit.Day} Routing szünetekt", MatToastType.Success, $"Sikeres törlés");
+        }
+        else
+        {
+            Toaster.Add($"A törlés nem sikerült, mert: {result.Message}", MatToastType.Danger, "Sikertelen törlés");
+        }
+
+        isDeleteDialogOpen = false;
+        UpdateItems();
+    }
+
+    protected override void OnInitialized()
+    {
+        _multModel = new SummarizedRoutingManagerViewModel();
+
+        base.OnInitialized();
+        UpdateItems();
+    }
+
+    private void UpdateItems() => Dispatcher.Dispatch(new LoadPausesAction(State.Value.PageIndex, State.Value.PageSize, WeekNumber, Year));
+}

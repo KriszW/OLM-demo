@@ -1,0 +1,33 @@
+﻿<div class="d-flex justify-content-between">
+    <div class="d-flex align-items-center text-white w-100 ">
+        @HeaderContent
+    </div>
+    <div class="d-flex justify-content-center align-items-center w-25">
+        <MatIcon Icon="@ExpandCssClass" Class="menuicons sub-menu-dropdown-icon" @onclick="ToggleDropDown" />
+    </div>
+</div>
+
+@if (expandDropDownMenu)
+{
+    @DropDownMenuContent
+}
+
+
+@code
+{
+    private bool expandDropDownMenu = false;
+    private string ExpandCssClass => expandDropDownMenu ? MatIconNames.Arrow_drop_up : MatIconNames.Arrow_drop_down;
+
+    [Parameter]
+    public RenderFragment HeaderContent { get; set; }
+
+    [Parameter]
+    public RenderFragment DropDownMenuContent { get; set; }
+
+
+    private void ToggleDropDown()
+    {
+        expandDropDownMenu = !expandDropDownMenu;
+    }
+
+}

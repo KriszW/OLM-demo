@@ -1,0 +1,86 @@
+﻿@implements IDisposable
+
+@using Toolbelt.Blazor.HotKeys
+@using OLM.Blazor.WASM.Store.Shared.ToggleableSideBar
+@using OLM.Blazor.WASM.Store.Shared.ToggleableSideBar.Actions
+
+
+@inject HotKeys HotKeys
+@inject NavigationManager _navManager
+@inject IDispatcher _dispatcher;
+@inject IState<ToggleableSideBarState> _state;
+@inject IStorageRepository _storageRepository;
+
+
+<StoreInitializer />
+<MatToastContainer />
+
+<MediaQueryList>
+    <MatThemeProvider Theme="theme">
+        <Router AppAssembly="@typeof(Program).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <Authorizing>
+                        <AlwaysSpinner />
+                    </Authorizing>
+                    <NotAuthorized>
+                        @if (context.User.Identity.IsAuthenticated == false)
+                        {
+                            <RedirectToLogin></RedirectToLogin>
+                        }
+                        else
+                        {
+                            <h1>Nincs jogod ehhez az oldalhoz.</h1>
+                            <button @onclick="NavigateToHomePage">Visszalépés a kezdőlapra</button>
+                        }
+                    </NotAuthorized>
+
+                </AuthorizeRouteView>
+            </Found>
+            <NotFound>
+                <CascadingAuthenticationState>
+                    <LayoutView Layout="@typeof(MainLayout)">
+                        <h1>Nem található ez az oldal.</h1>
+                        <button @onclick="NavigateToHomePage">Kezdőlap</button>
+                    </LayoutView>
+                </CascadingAuthenticationState>
+            </NotFound>
+        </Router>
+    </MatThemeProvider>
+</MediaQueryList>
+
+@code
+{
+    HotKeysContext HotKeysContext;
+
+    private MatTheme theme = new MatTheme()
+        {
+            Primary = "#ce0000",
+            Secondary = "#ce0000"
+        };
+
+    public void NavigateToHomePage()
+    {
+        _navManager.NavigateTo("");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.HotKeysContext = this.HotKeys.CreateContext()
+            .Add(ModKeys.Ctrl | ModKeys.Alt, Keys.H, HideMenu, "Az oldalsó főmenü eltűntése/megjelenítése");
+
+        var value = await _storageRepository.ReadToken<bool>("hiddenMenu");
+
+        _dispatcher.Dispatch(new ChangeMenuAction(value));
+    }
+
+    void HideMenu()
+    {
+        _dispatcher.Dispatch(new ChangeMenuAction(!_state.Value.Hidden));
+    }
+
+    public void Dispose()
+    {
+        this.HotKeysContext.Dispose();
+    }
+}

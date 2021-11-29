@@ -1,0 +1,32 @@
+﻿@page "/settings"
+
+@inject IStorageRepository StorageRepository
+
+<MatSelect Label="TCO Valuta" TValue="string" ValueChanged="TCOCurrencyChanged" Value="selectedTCOCurrency">
+    <MatOptionString Value="HUF">HUF</MatOptionString>
+    <MatOptionString Value="EUR">EUR</MatOptionString>
+    <MatOptionString Value="USD">USD</MatOptionString>
+</MatSelect> 
+
+@code {
+
+    private string selectedTCOCurrency;
+
+    private async Task TCOCurrencyChanged(string newCurrency)
+    {
+        await StorageRepository.SaveToken("TCOCurrency", newCurrency);
+        selectedTCOCurrency = newCurrency;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            selectedTCOCurrency = await StorageRepository.ReadToken<string>("TCOCurrency");
+        }
+        catch (Exception)
+        {
+            await TCOCurrencyChanged("HUF");
+        }
+    }
+}

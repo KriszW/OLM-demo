@@ -1,0 +1,97 @@
+﻿@page "/report/followup/weekly/day"
+@using OLM.Blazor.WASM.Store.DailyReport.Weekly.DayFollowUp
+@using OLM.Blazor.WASM.Store.DailyReport.Weekly.DayFollowUp.Actions
+
+@inherits FluxorComponent
+
+@inject IState<WeeklyDayFollowUpState> State
+@inject IDispatcher Dispatcher
+@inject IJSRuntime JSRuntime
+@inject AppOptions AppOptions
+
+<div style="height:90vh;">
+    @if (State.Value.IsLoading == false)
+    {
+        if (State.Value.Data != default)
+        {
+            <div id="weeklyDayWasteFollowUp" style="height:100%;"></div>
+        }
+        else
+        {
+            if (State.Value.Errors != default && State.Value.Errors.Errors?.Any() == true)
+            {
+                <DataFetchError ErrorMSG="@State.Value.Errors.Errors.First().ErrorMSG" />
+            }
+            else
+            {
+                <span>A napi follow up selejt report lekérdezés közben váratlan hiba lépett fel</span>
+            }
+        }
+    }
+    else
+    {
+        <AlwaysSpinner />
+    }
+</div>
+
+<div class="d-flex align-items-center justify-content-between">
+
+    <div>
+        <MatDatePicker TValue="DateTime" EnableTime="false" @bind-Value="Date" />
+    </div>
+    <div>
+        <a target="_blank" href="@AppOptions.APIurl/api/dailyreports/files/weekly?date=@Date.ToString("s")">
+            <MatButton Label="Letöltés excelbe" Outlined="true" Icon="@MatIconNames.Cloud_download" />
+        </a>
+    </div>
+</div>
+
+@code
+{
+    private DateTime _date;
+
+    public DateTime Date
+    {
+        get { return _date; }
+        set
+        {
+            var date = value.ToLocalTime();
+            _date = date;
+            Dispatcher.Dispatch(new StartFetchingFollowUpData(_date));
+            _rendered = false;
+        }
+    }
+
+    private bool _rendered = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (State.Value.Data != default)
+        {
+            if (_rendered == false)
+            {
+                var data = State.Value.Data;
+
+                await JSRuntime.InvokeVoidAsync("drawWeeklyDayFollowUpWaste", new
+                {
+                    divID = "weeklyDayWasteFollowUp",
+                    xAxisData = data.Models.Select(m => m.Date.Date.ToString("d")),
+                    targetYAxisData = data.Models.Select(m => m?.TotalTargetPercent),
+                    totalWasteYAxisData = data.Models.Select(m => m?.TotalWastePercent),
+                    sawYAxisData = data.Models.Select(m => m?.TotalSawPercent),
+                    fsYAxisData = data.Models.Select(m => m?.TotalFSPercent),
+                    tramYAxisData = data.Models.Select(m => m?.TotalTramPercent),
+                    lamYAxisData = data.Models.Select(m => m?.TotalLamellaPercent),
+                });
+
+                _rendered = true;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Date = DateTime.Now.GetPreviousWorkDay();
+    }
+}

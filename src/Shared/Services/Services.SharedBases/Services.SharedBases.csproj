@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>OLM.Services.SharedBases</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Exceptions\APIResponse.Exceptions\APIResponse.Exceptions.csproj" />
+    <ProjectReference Include="..\Services.SharedBasses.APIErrors\Services.SharedBasses.APIErrors.csproj" />
+  </ItemGroup>
+
+</Project>

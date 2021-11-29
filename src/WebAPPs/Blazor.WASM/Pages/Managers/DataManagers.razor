@@ -1,0 +1,41 @@
+﻿@page "/managers"
+
+@attribute [Authorize]
+
+<MatTabGroup>
+    <MatTab Label="Valuta átváltás">
+        <OLM.Blazor.WASM.Pages.Managers.MoneyExchangeRate.Manager.CurrencyManager />
+    </MatTab>
+    <MatTab Label="Rakat árak">
+        <OLM.Blazor.WASM.Pages.Managers.BundlePrice.Prices />
+    </MatTab>
+    <MatTab Label="Cikk TCO beállítások">
+        <OLM.Blazor.WASM.Pages.Managers.TCOSettings.TCOSettings />
+    </MatTab>
+    <MatTab Label="Cikk kategóriák">
+        <OLM.Blazor.WASM.Pages.Managers.ItemNumberManager.CategoryItemNumberManager />
+    </MatTab>
+    <MatTab Label="Napi report">
+        <MatTabGroup>
+            <MatTab Label="Csille dimenziók">
+                <OLM.Blazor.WASM.Pages.Managers.Tram.TramDimensionsManager />
+            </MatTab>
+            <MatTab Label="Target">
+                <OLM.Blazor.WASM.Pages.Managers.Target.TargetManager />
+            </MatTab>
+        </MatTabGroup>
+    </MatTab>
+    <MatTab Label="Routing">
+        <MatTabGroup>
+            <MatTab Label="Routingok">
+                <OLM.Blazor.WASM.Pages.Managers.Routing.RoutingManager />
+            </MatTab>
+            <MatTab Label="Szünetek">
+                <OLM.Blazor.WASM.Pages.Managers.Routing.Times.RoutingPausesManager />
+            </MatTab>
+            <MatTab Label="Termelés nyitvatartás">
+                <OLM.Blazor.WASM.Pages.Managers.Routing.Times.RoutingProductionTimesManager />
+            </MatTab>
+        </MatTabGroup>
+    </MatTab>
+</MatTabGroup>

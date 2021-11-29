@@ -1,0 +1,24 @@
+﻿using Fluxor;
+using OLM.Blazor.WASM.Store.Manager.MoneyExchangeRateManager.Currency.Actions;
+using OLM.Blazor.WASM.Store.Manager.Target.WasteTarget.Actions;
+using OLM.Blazor.WASM.Store.Manager.Tram.Dimensions.Actions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace OLM.Blazor.WASM.Store.Manager.MoneyExchangeRateManager.Currency.Reducers
+{
+    public class CurrencyNewPageSizeReducer : Reducer<CurrencyManagerState, CurrencyPageSizeChangedAction>
+    {
+        public override CurrencyManagerState Reduce(CurrencyManagerState state, CurrencyPageSizeChangedAction action)
+            => new CurrencyManagerState(state.PageIndex,
+                                     action.NewPageSize,
+                                     state.IsLoading,
+                                     state.Errors,
+                                     state.Data,
+                                     default,
+                                     default,
+                                     default);
+    }
+}

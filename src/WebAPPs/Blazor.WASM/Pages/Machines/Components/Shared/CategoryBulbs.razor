@@ -1,0 +1,73 @@
+﻿@inject IStorageRepository StorageRepository
+
+<div class="bundle-data-container-title">
+    <div class="data-col">Vágás lista kategória szabályok</div>
+</div>
+@while (iterator < ValidationResults.Count)
+{
+    var left = ValidationResults.Count - iterator;
+    var rowCount = Math.Min(left, MaxinARow);
+
+<div class="bundle-data-container-light-bulb">
+    @for (int i = 0; i < rowCount; i++)
+    {
+        if (ValidationResults[iterator].ValidationSucceded == true)
+        {
+            <div class="data-col">
+                <div class="alarm-light-bulb light-green"></div>
+                <span class="alarm-light-bulb-label">Kategória @(iterator + 1)</span>
+            </div>
+        }
+        else
+        {
+            <div class="data-col">
+                <div class="alarm-light-bulb light-orange blink @(stop == true ? "stop" : "")" @onclick="StopPulsation"></div>
+                <span class="alarm-light-bulb-label">Kategória @(iterator + 1)</span>
+            </div>
+        }
+
+        iterator++;
+    }
+</div>
+}
+
+@{ 
+    iterator = 0;
+}
+
+<style>
+    .bundle-data-container-light-bulb {
+        display: grid;
+        grid-template-columns: repeat(@MaxinARow, 1fr);
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<ValidationResult> ValidationResults { get; set; }
+
+    [Parameter]
+    public int MaxinARow { get; set; }
+
+    private bool stop = false;
+    private string nameOfSaveData => "HasToStopPulsingFailedBulbs";
+
+    private int iterator = 0;
+
+    private async Task StopPulsation()
+    {
+        stop = !stop;
+
+        await StorageRepository.SaveToken(nameOfSaveData, stop);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        stop = await StorageRepository.ReadToken<bool>(nameOfSaveData);
+    }
+
+    protected override void OnParametersSet()
+    {
+        iterator = 0;
+    }
+}

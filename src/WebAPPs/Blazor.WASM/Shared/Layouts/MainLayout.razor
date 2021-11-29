@@ -1,0 +1,12 @@
+﻿@inherits LayoutComponentBase
+
+@inject IStorageRepository _storageRepository
+@inject IJSRuntime JSRuntime
+
+<ToggleableSideBar />
+
+<div class="main">
+    <div class="content px-4">
+        @Body
+    </div>
+</div>
